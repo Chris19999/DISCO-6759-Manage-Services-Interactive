@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DISCO-6759 — Manage Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      width: 100%;
+      padding: 48px 48px 0;
+      max-width: 1200px;
+    }
+    .ticket-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e5a00d;
+      background: rgba(229, 160, 13, 0.12);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    h1 {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 48px;
+      line-height: 1.5;
+    }
+    .subtitle a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,255,0.2);
+      text-underline-offset: 3px;
+    }
+    .subtitle a:hover { color: #fff; text-decoration-color: rgba(255,255,255,0.5); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 48px 48px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+    }
+    .card:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .card-preview {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .card-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none;
+      transform-origin: top left;
+    }
+    .card-preview .preview-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.4);
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover .preview-label { opacity: 1; }
+    .card-info {
+      padding: 20px 24px;
+    }
+    .card-platform {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 6px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.4;
+    }
+    .card-dims {
+      display: inline-block;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    /* Spec section */
+    .spec-section {
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 48px 64px;
+    }
+    .spec-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .spec-link:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.15);
+    }
+    .spec-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .spec-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(229, 160, 13, 0.12);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .spec-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .spec-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+    }
+    .spec-arrow {
+      color: rgba(255,255,255,0.3);
+      font-size: 20px;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 48px;
+      margin-bottom: 32px;
+    }
+    .divider hr {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.3);
+      padding: 0 48px;
+      max-width: 1200px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; padding: 0 24px 24px; }
+      .header { padding: 32px 24px 0; }
+      .spec-section { padding: 0 24px 48px; }
+      .divider { padding: 0 24px; }
+      .section-label { padding: 0 24px; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="ticket-badge">DISCO-6759</div>
+    <h1>Manage Services</h1>
+    <p class="subtitle">
+      Interactive mockups for the service selection redesign across TV, Web, and Mobile.
+      <br>
+      <a href="https://www.figma.com/design/angRLfny8lSdlHLuev6l9u/DISCO-6759--Redesign-service-selection-and-w2w-modal" target="_blank">View Figma File ↗</a>
+    </p>
+  </div>
+
+  <div class="section-label">Interactive Mockups</div>
+  <div class="grid">
+    <a class="card" href="./tv/manage-services.html">
+      <div class="card-preview" style="background: #111;">
+        <svg width="80" height="50" viewBox="0 0 80 50" fill="none">
+          <rect x="2" y="2" width="76" height="42" rx="4" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <rect x="30" y="46" width="20" height="2" rx="1" fill="rgba(255,255,255,0.15)"/>
+          <rect x="60" y="8" width="14" height="30" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <rect x="8" y="12" width="6" height="6" rx="1" fill="rgba(229,160,13,0.3)"/>
+          <rect x="8" y="22" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+          <rect x="8" y="32" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+        </svg>
+        <div class="preview-label">Open Mockup →</div>
+      </div>
+      <div class="card-info">
+        <div class="card-platform">TV</div>
+        <div class="card-title">Remote Control Navigation</div>
+        <div class="card-desc">Arrow keys, Enter, Backspace for back. JumpBar, focus zones, nested sheet drawers.</div>
+        <div class="card-dims">1920 × 1080</div>
+      </div>
+    </a>
+
+    <a class="card" href="./web/manage-services.html">
+      <div class="card-preview" style="background: #111;">
+        <svg width="80" height="54" viewBox="0 0 80 54" fill="none">
+          <rect x="2" y="2" width="76" height="8" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <circle cx="7" cy="6" r="2" fill="#ff5f56"/>
+          <circle cx="13" cy="6" r="2" fill="#ffbd2e"/>
+          <circle cx="19" cy="6" r="2" fill="#27c93f"/>
+          <rect x="2" y="12" width="76" height="40" rx="0" fill="rgba(255,255,255,0.02)"/>
+          <rect x="22" y="16" width="36" height="32" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <rect x="28" y="22" width="6" height="6" rx="1" fill="rgba(229,160,13,0.3)"/>
+          <rect x="28" y="32" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+        </svg>
+        <div class="preview-label">Open Mockup →</div>
+      </div>
+      <div class="card-info">
+        <div class="card-platform">Web</div>
+        <div class="card-title">Modal Dialog</div>
+        <div class="card-desc">Mouse/keyboard. Centered modal with search, sort dropdown, more options drawer.</div>
+        <div class="card-dims">1250 × 1080</div>
+      </div>
+    </a>
+
+    <a class="card" href="./mobile/manage-services.html">
+      <div class="card-preview" style="background: #111;">
+        <svg width="36" height="64" viewBox="0 0 36 64" fill="none">
+          <rect x="2" y="2" width="32" height="60" rx="8" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <rect x="12" y="4" width="12" height="3" rx="1.5" fill="rgba(255,255,255,0.1)"/>
+          <rect x="8" y="14" width="6" height="6" rx="1" fill="rgba(229,160,13,0.3)"/>
+          <rect x="8" y="24" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+          <rect x="8" y="34" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+          <rect x="8" y="44" width="6" height="6" rx="1" fill="rgba(255,255,255,0.1)"/>
+        </svg>
+        <div class="preview-label">Open Mockup →</div>
+      </div>
+      <div class="card-info">
+        <div class="card-platform">Mobile</div>
+        <div class="card-title">Touch Interface</div>
+        <div class="card-desc">Full-screen sheet with search, sort, bottom sheet for more options.</div>
+        <div class="card-dims">393 × 854</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="divider"><hr></div>
+  <div class="section-label">Documentation</div>
+
+  <div class="spec-section">
+    <a class="spec-link" href="./manage-services-spec.md" target="_blank">
+      <div class="spec-left">
+        <div class="spec-icon">📋</div>
+        <div>
+          <div class="spec-title">Developer Spec</div>
+          <div class="spec-desc">Interaction behaviors, Chroma components, layout specs, Figma frame links</div>
+        </div>
+      </div>
+      <div class="spec-arrow">→</div>
+    </a>
+  </div>
+</body>
+</html>
