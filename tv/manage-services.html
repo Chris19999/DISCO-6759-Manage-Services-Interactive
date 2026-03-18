@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, initial-scale=1.0" />
+  <title>Manage Services - TV Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'PlexCircular';
+      src: url('plexcircular-bold.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+    }
+    :root {
+      --color-bg: #000000;
+      --color-surface: #000000;
+      --color-card: rgba(0, 0, 0, 0.3);
+      --color-control: rgba(255, 255, 255, 0.1);
+      --color-text-primary: #ffffff;
+      --color-text-default: rgba(255, 255, 255, 0.8);
+      --color-text-muted: rgba(255, 255, 255, 0.6);
+      --color-accent: #e5a00d;
+      --color-divider: rgba(255, 255, 255, 0.1);
+      --color-primary-fg-5: rgba(255, 255, 255, 0.05);
+      --color-primary-fg-30: rgba(255, 255, 255, 0.3);
+      --color-backdrop: rgba(0, 0, 0, 0.8);
+      --color-bg-outer: #1a1a1a;
+      --font-heading: 'PlexCircular', 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --radii-s: 4px;
+      --radii-m: 8px;
+      --radii-l: 16px;
+      --radii-max: 9999px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--color-bg);
+      font-family: var(--font-body);
+    }
+
+    /* Fix 6: Sheet container — flush right, 864px wide, full height */
+    .tv-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 864px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Fix 6 + Fix 1: Inner panel card with 32px margin and correct bg */
+    .panel-card {
+      position: relative;
+      margin: 32px;
+      flex: 1;
+      min-height: 0;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-inner {
+      position: relative;
+      z-index: 1;
+      width: 800px;
+      margin: 0 auto;
+      padding: 48px 64px 0 64px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .page-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 32px;
+      line-height: 48px;
+      color: var(--color-text-primary);
+      margin-bottom: 64px;
+    }
+
+    /* Toolbar removed — sort chip now inline with My Services header */
+
+    .sort-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 24px;
+      background: transparent;
+      border-radius: var(--radii-max);
+      border: none;
+      cursor: pointer;
+      color: var(--color-text-primary);
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 32px;
+      font-family: var(--font-body);
+      height: 48px;
+      transition: background 0.15s, color 0.15s;
+      outline: none;
+    }
+    .sort-chip.active {
+      background: transparent;
+      color: var(--color-text-primary);
+    }
+    .sort-chip.focused {
+      background: #ffffff;
+      color: #000;
+    }
+    .sort-chip.focused svg path { stroke: #000; }
+
+    /* Fix 2: Scrollable content area with custom scrollbar */
+    .scroll-area-wrapper {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      /* Gradient fade mask — dynamically applied via JS based on scroll position */
+    }
+    .scroll-area {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 64px;
+      /* Disable browser scroll anchoring — we handle scroll compensation manually */
+      overflow-anchor: none;
+      /* Hide native scrollbar */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .scroll-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Fix 2: Custom Chroma Scrollbar */
+    .custom-scrollbar {
+      position: absolute;
+      width: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      z-index: 3;
+      pointer-events: none;
+    }
+    /* Main panel scrollbar — not used on TV */
+    .panel-card > .custom-scrollbar {
+      display: none;
+    }
+    /* More options drawer scrollbar — hidden on TV */
+    .more-options-drawer .custom-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar-thumb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 8px;
+      background: #ffffff;
+      border-radius: 8px;
+      min-height: 20px;
+      transition: top 0.05s linear;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+    .section-title-row { display: flex; align-items: center; gap: 8px; }
+    .section-title {
+      font-weight: 700;
+      font-size: 32px;
+      line-height: 48px;
+      color: var(--color-text-primary);
+      font-family: var(--font-heading);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
+      border-radius: var(--radii-m);
+      padding: 4px 12px;
+      font-size: 20px;
+      color: #ffffff;
+      font-weight: 600;
+      font-family: var(--font-body);
+      line-height: 24px;
+    }
+    .section-gap { height: 32px; }
+
+    /* Fix 3: Service item wrapper — flex container for row + action button */
+    .service-item-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .service-item-wrapper + .service-item-wrapper {
+      margin-top: 4px;
+    }
+
+    /* Service item */
+    .service-item {
+      display: flex;
+      align-items: center;
+      padding: 24px;
+      border-radius: 12px;
+      transition: background 0.15s;
+      min-height: 116px;
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+    .service-item.focused {
+      background: #ffffff;
+    }
+    .service-item.focused .service-name {
+      color: #000 !important;
+    }
+    .service-item.focused .service-subtitle {
+      color: #000 !important;
+      opacity: 1;
+    }
+
+    /* Fix 3: ListActionButton — separate container next to main row */
+    .list-action-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 0 24px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .list-action-button.sub-focused {
+      opacity: 1;
+      background: #ffffff;
+    }
+    .list-action-button.sub-focused svg circle {
+      fill: #000;
+    }
+
+    .service-left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
+    .service-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radii-m);
+      border: 1px solid var(--color-divider);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--color-bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .service-icon .placeholder {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      text-align: center;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+    .service-info { flex: 1; min-width: 0; margin-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .service-name {
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 32px;
+      color: var(--color-text-default);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--font-body);
+    }
+    .service-name.selected { color: var(--color-text-primary); }
+    .service-subtitle {
+      font-size: 22px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 28px;
+      font-family: var(--font-body);
+    }
+    .service-subtitle.subtitle-selected {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .service-subtitle.subtitle-unselected {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .service-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--color-divider);
+      margin: 0 16px;
+      flex-shrink: 0;
+    }
+    .service-item.focused .service-divider {
+      background: rgba(0,0,0,0.15);
+    }
+    .service-spacer {
+      width: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Switch — TV size: 56x32, thumb 26x26, 3px padding */
+    .switch {
+      width: 56px;
+      height: 32px;
+      border-radius: var(--radii-max);
+      background: var(--color-control);
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s cubic-bezier(0.33, 0, 0.67, 1);
+      overflow: hidden;
+      padding: 3px;
+      box-sizing: border-box;
+    }
+    .switch.active { background: var(--color-accent); }
+    .switch .thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radii-max);
+      background: white;
+      transition: transform 0.2s cubic-bezier(0.33, 0, 0.67, 1);
+    }
+    .switch.active .thumb { transform: translateX(24px); }
+    /* On focused white row, inactive switch needs contrast */
+    .service-item.focused .switch:not(.active) {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    .service-item.focused .switch:not(.active) .thumb {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .service-item.focused .switch.active {
+      background: var(--color-accent);
+    }
+
+    /* Animations */
+    @keyframes fadeOut {
+      0%   { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+    @keyframes collapseOut {
+      from { max-height: 116px; opacity: 0.3; margin-bottom: 0; }
+      to   { max-height: 0; opacity: 0; margin-bottom: -12px; overflow: hidden; }
+    }
+    .service-item-wrapper.flashing {
+      animation: fadeOut 1s ease forwards;
+    }
+    /* Allow interaction during fade to re-select */
+    .service-item-wrapper.collapsing {
+      animation: collapseOut 0.3s ease forwards;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    @keyframes fadeInItem {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .service-item-wrapper.entering {
+      animation: fadeInItem 0.3s ease forwards;
+    }
+
+    /* Sort overlay */
+    /* Sort drawer — same stacking sheet pattern as More Options */
+    .sort-drawer {
+      position: absolute;
+      top: 32px;
+      right: 32px;
+      bottom: 32px;
+      width: 704px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+      z-index: 12;
+      transform: translateX(110%);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .sort-drawer.visible {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .sort-drawer-inner {
+      padding: 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 64px;
+      flex: 1;
+    }
+    .sort-drawer-title {
+      font-weight: 700;
+      font-size: 32px;
+      line-height: 48px;
+      color: var(--color-text-primary);
+      font-family: var(--font-heading);
+    }
+    .sort-options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sort-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      border-radius: 9999px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      transition: background 0.15s;
+    }
+    .sort-option.focused {
+      background: #ffffff;
+    }
+    .sort-option-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sort-option-label {
+      flex: 1;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 32px;
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+    }
+    .sort-option.focused .sort-option-label { color: #000; }
+    .sort-option.focused .sort-option-icon svg path { stroke: #000; fill: #000; }
+
+    /* Nested drawer: main panel scales back when more-options opens */
+    .panel-card {
+      transform-origin: center right;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s;
+    }
+    .panel-card.drawer-behind {
+      transform: scale(0.96) translateX(-80px);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* More Options panel — nested drawer, right-aligned within .tv-panel */
+    .more-options-drawer {
+      position: absolute;
+      top: 32px;
+      right: 32px;
+      bottom: 32px;
+      width: calc(864px - 64px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      z-index: 5;
+      transform: translateX(110%);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .more-options-drawer.visible {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .more-options-drawer .drawer-inner {
+      width: 100%;
+      padding: 48px 64px 0 64px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .main-view {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .more-opts-header {
+      display: flex;
+      align-items: center;
+      padding: 0;
+      margin-bottom: 48px;
+      gap: 32px;
+    }
+    .more-opts-header .service-icon { width: 120px; height: 120px; border-radius: 12px; border: 1.5px solid rgba(255, 255, 255, 0.1); }
+    .more-opts-header .service-name-large {
+      flex: 1;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 48px;
+      font-family: var(--font-heading);
+      color: var(--color-text-primary);
+    }
+    .more-opts-header .options-subtitle {
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--color-text-default);
+      line-height: 28px;
+      font-family: var(--font-body);
+    }
+    .more-opts-divider {
+      display: none;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .tabs.sticky-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      padding: 8px 0;
+      margin-top: -8px;
+    }
+    .tab-btn {
+      background: none;
+      border: 1.5px solid transparent;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 32px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      height: 64px;
+      padding: 0 24px;
+      border-radius: var(--radii-max);
+      transition: all 0.2s;
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .tab-btn.active {
+      border-color: rgba(255,255,255,0.3);
+      color: var(--color-text-primary);
+      background: none;
+    }
+    .tab-btn.tab-focused {
+      background: #ffffff;
+      color: #000;
+      border-color: #ffffff;
+    }
+
+    .tab-desc {
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--color-text-default);
+      margin-bottom: 48px;
+      line-height: 28px;
+      font-family: var(--font-body);
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 32px 12px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      min-height: 104px;
+      margin-bottom: 4px;
+    }
+    .option-row.focused {
+      background: #ffffff;
+    }
+    .option-row.focused .option-name {
+      color: #000 !important;
+    }
+    .option-row .option-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radii-m);
+      border: 1px solid var(--color-control);
+      background: var(--color-bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 10px;
+      color: var(--color-text-muted);
+      font-weight: 700;
+      overflow: hidden;
+    }
+    .option-row .option-name {
+      flex: 1;
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 32px;
+      color: var(--color-text-default);
+      font-family: var(--font-body);
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    .option-row .option-name.selected { color: var(--color-text-primary); }
+    .option-row.plan-row {
+      min-height: 64px;
+      padding: 16px 32px 16px 12px;
+    }
+    .option-row.plan-row .option-name { padding-left: 8px; }
+
+    /* Checkbox/Radio — 24x24 container */
+    .checkbox-box, .radio-circle {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: visible;
+    }
+    .checkbox-box svg, .radio-circle svg {
+      position: absolute;
+      inset: -8.33%;
+      width: 116.67%;
+      height: 116.67%;
+      display: block;
+    }
+    /* On focused row, checkbox/radio outlines should be dark */
+    .option-row.focused .checkbox-box svg path[fill-opacity="0.3"],
+    .option-row.focused .radio-circle svg path[fill-opacity="0.3"] {
+      fill: #000;
+      fill-opacity: 0.3;
+    }
+    .option-row.focused .checkbox-box svg path[fill-opacity="0.05"],
+    .option-row.focused .radio-circle svg path[fill-opacity="0.05"] {
+      fill: #000;
+      fill-opacity: 0.05;
+    }
+
+    .tab-content { }
+    .tab-content.tab-entering {
+      animation: fadeIn 0.2s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .dimmed { opacity: 0.4; pointer-events: none; }
+
+    /* Blank state */
+    .blank-state-title { padding: 12px 0; }
+    .blank-state-heading {
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--color-text-primary);
+    }
+    .blank-state-body {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    svg { display: block; }
+
+    /* A-Z Scrubber */
+    .scrubber {
+      position: absolute;
+      right: 36px;
+      top: 173px;
+      bottom: 32px;
+      width: 56px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 5;
+    }
+    .scrubber.visible { display: flex; }
+    .scrubber-letter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      font-family: -apple-system, 'SF Pro Text', var(--font-body);
+      border-radius: 9999px;
+      cursor: pointer;
+      line-height: 24px;
+      white-space: nowrap;
+    }
+    .scrubber-letter.disabled {
+      color: rgba(255,255,255,0.2);
+      cursor: default;
+    }
+    .scrubber-letter.active {
+      font-size: 20px;
+      color: rgba(255,255,255,0.8);
+    }
+    .scrubber-letter.active > .scrubber-circle {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scrubber-letter.focused {
+      font-size: 20px;
+      color: #000000;
+    }
+    .scrubber-letter.focused > .scrubber-circle {
+      width: 40px;
+      height: 40px;
+      background: #ffffff;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-inner.scrubber-active {
+      padding-right: 128px;
+    }
+    .hidden { display: none; }
+
+    /* Placeholder background content */
+    .bg-content {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: #1a1a1a;
+      padding: 48px;
+      overflow: hidden;
+    }
+    .bg-nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+    .bg-nav-logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e5a00d;
+      font-family: var(--font-heading);
+      letter-spacing: 2px;
+    }
+    .bg-nav-item {
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bg-nav-item.active { color: #fff; }
+    .bg-row-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 16px;
+      font-family: var(--font-body);
+    }
+    .bg-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .bg-card {
+      width: 240px;
+      height: 135px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.15);
+      font-size: 12px;
+      font-family: var(--font-body);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Placeholder background content (Plex browse page) -->
+  <div class="bg-content">
+    <div class="bg-nav">
+      <div class="bg-nav-logo">plex</div>
+      <div class="bg-nav-item active">Home</div>
+      <div class="bg-nav-item">Libraries</div>
+      <div class="bg-nav-item">Live TV</div>
+    </div>
+    <div class="bg-row-title">Title ›</div>
+    <div class="bg-row">
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+    </div>
+    <div class="bg-row-title">Title ›</div>
+    <div class="bg-row">
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+      <div class="bg-card">Image Placeholder</div>
+    </div>
+  </div>
+
+  <!-- Fix 6: .tv-panel is the sheet (864px flush right), .panel-card is the inner rounded panel -->
+  <div class="tv-panel">
+    <div class="panel-card">
+
+      <!-- Main view -->
+      <div class="panel-inner" id="panelInner">
+        <div class="page-title">Manage Services</div>
+
+        <div class="main-view" id="mainView">
+          <!-- Fix 2: scroll-area-wrapper with custom scrollbar -->
+          <div class="scroll-area-wrapper">
+            <div class="scroll-area" id="scrollArea">
+              <div id="myServicesSection">
+                <div class="section-header">
+                  <div class="section-title-row">
+                    <span class="section-title">My Services</span>
+                    <span class="badge" id="myCount">2</span>
+                  </div>
+                  <button class="sort-chip" id="sortChip" tabindex="-1">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" class="sort-icon"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <span id="sortLabel">Popularity</span>
+                  </button>
+                </div>
+                <div id="myServicesPopulated">
+                  <div id="myServicesList"></div>
+                </div>
+                <div id="myServicesBlank" class="hidden">
+                  <div class="blank-state-heading">It's a little empty here...</div>
+                  <div class="blank-state-body">Select the services that you use. This might be easier in the Plex mobile app.</div>
+                </div>
+                <div class="section-gap"></div>
+              </div>
+              <div class="section-header" id="allServicesSection">
+                <div class="section-title-row"><span class="section-title">All Services</span></div>
+              </div>
+              <div id="allServicesList"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- A-Z Scrubber — positioned in panel-card right padding area -->
+      <div class="scrubber" id="scrubber"></div>
+
+      <!-- Custom scrollbar — positioned within panel-card -->
+      <div class="custom-scrollbar" id="customScrollbar">
+        <div class="custom-scrollbar-thumb" id="customScrollbarThumb"></div>
+      </div>
+
+      <!-- Sort overlay (now hidden — sort uses drawer) -->
+      <div class="sort-overlay" id="sortOverlay" style="display:none"></div>
+    </div>
+
+    <!-- Sort drawer — stacked sheet, same level as more-options-drawer -->
+    <div class="sort-drawer" id="sortDrawer">
+      <div class="sort-drawer-inner">
+        <div class="sort-drawer-title">Sort by</div>
+        <div class="sort-options-list" id="sortOptions"></div>
+      </div>
+    </div>
+
+    <!-- Nested drawer for More Options -->
+    <div class="more-options-drawer" id="moreDrawer">
+      <div class="drawer-inner">
+        <div class="more-opts-back-title" style="font-family:var(--font-heading);font-weight:700;font-size:32px;color:var(--color-text-primary);margin-bottom:64px;">Select Plan & Add Ons</div>
+        <div class="scroll-area-wrapper">
+          <div class="scroll-area" id="moreScrollArea">
+            <div id="moreFixedContent"></div>
+            <div id="moreContent"></div>
+          </div>
+          <div class="custom-scrollbar" id="moreCustomScrollbar" style="display:none">
+            <div class="custom-scrollbar-thumb" id="moreCustomScrollbarThumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Data (same as mobile) ──
+    const services = [
+      { id: 'netflix', name: 'Netflix', color: '#E50914', label: 'NETFLIX', enabled: true, optionsCount: 12,
+        channels: [
+          { id:'ch1', name:'Channel 1', selected: false },
+          { id:'ch2', name:'Channel 2', selected: true },
+          { id:'ch3', name:'Channel 3', selected: false },
+          { id:'ch4', name:'Channel 4', selected: true },
+        ],
+        plans: [
+          { id:'basic', name:'Basic Plan', selected: false },
+          { id:'standard', name:'Standard Plan', selected: true },
+          { id:'premium', name:'Premium Plan', selected: false },
+        ]
+      },
+      { id: 'apple-tv', name: 'Apple TV+', color: '#000', label: 'tv', enabled: true,
+        channels: [
+          { id:'atv-acorn-tv', name:'Acorn TV', selected: false },
+          { id:'atv-britbox', name:'BritBox', selected: false },
+          { id:'atv-paramount-ch', name:'Paramount+', selected: false },
+        ]
+      },
+      { id: 'prime-video', name: 'Prime Video', color: '#00A8E1', label: 'prime', enabled: false, optionsCount: 5,
+        channels: [
+          { id:'pv-mgm', name:'MGM+', selected: false },
+          { id:'pv-starz', name:'Starz', selected: false },
+          { id:'pv-acorn-tv', name:'Acorn TV', selected: false },
+          { id:'pv-britbox', name:'BritBox', selected: false },
+        ],
+        plans: [{ id:'prime', name:'Prime', selected: false }, { id:'prime-ad', name:'Prime with Ads', selected: false }]
+      },
+      { id: 'hulu', name: 'Hulu', color: '#1CE783', label: 'hulu', enabled: false },
+      { id: 'paramount', name: 'Paramount+', color: '#0064FF', label: 'P+', enabled: false },
+      { id: 'peacock', name: 'Peacock', color: '#000', label: 'peacock', enabled: false },
+      { id: 'max', name: 'Max', color: '#002BE7', label: 'MAX', enabled: false },
+      { id: 'disney', name: 'Disney+', color: '#113CCF', label: 'D+', enabled: false },
+    ];
+
+    // ── State ──
+    const state = {
+      currentSort: 'popularity',
+      moreOptionsId: null,
+      moreActiveTab: 0,
+      svgIdCounter: 0,
+      // Focus system
+      focusZone: 'services',  // 'services' | 'sort' | 'moreOptions' | 'scrubber'
+      focusIndex: 0,
+      subFocus: null,  // null | 'menu'
+      // Cache for navigation
+      prevServiceFocusIndex: 0,
+      moreReturnServiceId: null,
+      // Fix B/C: Animation lock
+      animating: false,
+      animTimeout: null,
+      // Fix D: Sort overlay focus restoration
+      prevSortFocusIndex: 0,
+      // Fix E: Per-tab focus positions in more options
+      moreTabFocusIndex: [0, 0],
+      // Fix I: Tab bar focus flag for more options
+      moreTabFocused: false,
+      // Scroll compensation flag
+      skipNextScrollIntoView: false,
+    };
+
+    const pendingRemovals = new Map();
+    const sortOptions = ['popularity', 'alphabetical', 'free'];
+    const sortLabels = { popularity: 'Popularity', alphabetical: 'Alphabetical', free: 'Free' };
+
+    // ── SVG Helpers (same paths as mobile) ──
+    function checkboxSVG(checked) {
+      const id = 'cb' + (state.svgIdCounter++);
+      const checkFill = checked ? '#E5A00D' : 'white';
+      const checkOpacity = checked ? '1' : '0.1';
+      const checkFillOpacity = checked ? '1' : '0.8';
+      return `<div class="checkbox-box"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="28" height="28" fill="black">
+          <rect fill="white" width="28" height="28"/>
+          <path d="M2 6C2 3.79086 3.79086 2 6 2H22C24.2091 2 26 3.79086 26 6V22C26 24.2091 24.2091 26 22 26H6C3.79086 26 2 24.2091 2 22V6Z"/>
+        </mask>
+        <path d="M2 6C2 3.79086 3.79086 2 6 2H22C24.2091 2 26 3.79086 26 6V22C26 24.2091 24.2091 26 22 26H6C3.79086 26 2 24.2091 2 22V6Z" fill="white" fill-opacity="0.05"/>
+        <path d="M6 2V4H22V2V0H6V2ZM26 6H24V22H26H28V6H26ZM22 26V24H6V26V28H22V26ZM2 22H4V6H2H0V22H2ZM6 26V24C4.89543 24 4 23.1046 4 22H2H0C0 25.3137 2.68629 28 6 28V26ZM26 22H24C24 23.1046 23.1046 24 22 24V26V28C25.3137 28 28 25.3137 28 22H26ZM22 2V4C23.1046 4 24 4.89543 24 6H26H28C28 2.68629 25.3137 0 22 0V2ZM6 2V0C2.68629 0 0 2.68629 0 6H2H4C4 4.89543 4.89543 4 6 4V2Z" fill="white" fill-opacity="0.3" mask="url(#${id})"/>
+        <path opacity="${checkOpacity}" fill-rule="evenodd" clip-rule="evenodd" d="M6 14.2176L11.8584 20L22 9.99327L19.9801 8L11.8584 16.0156L8.01767 12.2266L6 14.2176Z" fill="${checkFill}" fill-opacity="${checkFillOpacity}"/>
+      </svg></div>`;
+    }
+
+    function radioSVG(checked) {
+      const id = 'rb' + (state.svgIdCounter++);
+      const dotFill = checked ? '#E5A00D' : 'white';
+      const dotOpacity = checked ? '1' : '0.1';
+      const dotFillOpacity = checked ? '1' : '0.8';
+      return `<div class="radio-circle"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="28" height="28" fill="black">
+          <rect fill="white" width="28" height="28"/>
+          <path d="M2 14C2 7.37258 7.37258 2 14 2V2C20.6274 2 26 7.37258 26 14V14C26 20.6274 20.6274 26 14 26V26C7.37258 26 2 20.6274 2 14V14Z"/>
+        </mask>
+        <path d="M2 14C2 7.37258 7.37258 2 14 2V2C20.6274 2 26 7.37258 26 14V14C26 20.6274 20.6274 26 14 26V26C7.37258 26 2 20.6274 2 14V14Z" fill="white" fill-opacity="0.05"/>
+        <path d="M14 26V24C8.47715 24 4 19.5228 4 14H2H0C0 21.732 6.26801 28 14 28V26ZM26 14H24C24 19.5228 19.5228 24 14 24V26V28C21.732 28 28 21.732 28 14H26ZM14 2V4C19.5228 4 24 8.47715 24 14H26H28C28 6.26801 21.732 0 14 0V2ZM14 2V0C6.26801 0 0 6.26801 0 14H2H4C4 8.47715 8.47715 4 14 4V2Z" fill="white" fill-opacity="0.3" mask="url(#${id})"/>
+        <circle opacity="${dotOpacity}" cx="14" cy="14" r="6" fill="${dotFill}" fill-opacity="${dotFillOpacity}"/>
+      </svg></div>`;
+    }
+
+    // ── Build flat item list for services zone ──
+    // Returns: [{type:'sort'}, {type:'service', service, section:'my'|'all'}]
+    function getServiceItems() {
+      const items = [{ type: 'sort' }];
+      const myServices = services.filter(s => s.enabled || pendingRemovals.has(s.id));
+      const allServices = state.currentSort === 'alphabetical'
+        ? [...services].sort((a, b) => a.name.localeCompare(b.name))
+        : state.currentSort === 'free'
+        ? [...services].sort((a, b) => {
+            const aFree = !a.optionsCount;
+            const bFree = !b.optionsCount;
+            if (aFree !== bFree) return aFree ? -1 : 1;
+            return 0;
+          })
+        : [...services];
+
+      myServices.forEach(s => items.push({ type: 'service', service: s, section: 'my' }));
+      allServices.forEach(s => items.push({ type: 'service', service: s, section: 'all' }));
+      return items;
+    }
+
+    // ── Build flat item list for more options zone ──
+    function getMoreItems() {
+      const s = services.find(sv => sv.id === state.moreOptionsId);
+      if (!s) return [];
+      const hasChannels = s.channels && s.channels.length > 0;
+      const hasPlans = s.plans && s.plans.length > 0;
+      const items = [];
+
+      if (state.moreActiveTab === 0 && hasChannels) {
+        s.channels.forEach((ch, i) => items.push({ type: 'channel', channel: ch, index: i, serviceId: s.id }));
+      }
+      if (state.moreActiveTab === 1 && hasPlans) {
+        s.plans.forEach((p, i) => items.push({ type: 'plan', plan: p, index: i, serviceId: s.id }));
+      }
+      return items;
+    }
+
+    // ── Rendering ──
+
+    function createServiceItem(service, itemIndex, section) {
+      const hasOptions = (service.optionsCount || 0) > 0 || (service.channels && service.channels.length > 0);
+      const optCount = service.optionsCount || (service.channels ? service.channels.length : 0);
+      const isFocused = state.focusZone === 'services' && state.focusIndex === itemIndex && state.subFocus === null;
+      const menuFocused = state.focusZone === 'services' && state.focusIndex === itemIndex && state.subFocus === 'menu';
+      const isRowActive = isFocused || menuFocused;
+
+      // Subtitle: always show on TV if service has options, regardless of focus/section
+      const showSubtitle = hasOptions;
+
+      // Fix 3: Action button is always present when optionsCount > 0, outside the main row
+      const showActionButton = hasOptions && isRowActive;
+
+      let html = `<div class="service-item-wrapper" data-item-index="${itemIndex}" data-service-id="${service.id}" data-section="${section}">`;
+
+      // Main service row
+      html += `<div class="service-item${isFocused ? ' focused' : ''}">
+          <div class="service-left">
+            <div class="service-icon" style="background: ${service.color}">
+              <span class="placeholder">${service.label}</span>
+            </div>
+            <div class="service-info">
+              <div class="service-name${service.enabled ? ' selected' : ''}">${service.name}</div>
+              ${showSubtitle ? `<div class="service-subtitle ${service.enabled ? 'subtitle-selected' : 'subtitle-unselected'}">${optCount} options</div>` : ''}
+            </div>
+          </div>
+          <div class="service-spacer"></div>
+          <div class="switch ${service.enabled ? 'active' : ''}">
+            <div class="thumb"></div>
+          </div>
+        </div>`;
+
+      // Fix 3: Separate ListActionButton
+      if (showActionButton) {
+        html += `<div class="list-action-button${isRowActive && !menuFocused ? ' row-focused' : ''}${menuFocused ? ' sub-focused' : ''}">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="5" r="2" fill="white"/>
+              <circle cx="12" cy="12" r="2" fill="white"/>
+              <circle cx="12" cy="19" r="2" fill="white"/>
+            </svg>
+          </div>`;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    function render() {
+      // Fix A: Bounds validation
+      const _items = getServiceItems();
+      if (state.focusIndex >= _items.length) {
+        state.focusIndex = Math.max(0, _items.length - 1);
+      }
+      if (state.focusIndex < 0) state.focusIndex = 0;
+
+      const myServices = services.filter(s => s.enabled || pendingRemovals.has(s.id));
+      const allServices = state.currentSort === 'alphabetical'
+        ? [...services].sort((a, b) => a.name.localeCompare(b.name))
+        : state.currentSort === 'free'
+        ? [...services].sort((a, b) => {
+            const aFree = !a.optionsCount;
+            const bFree = !b.optionsCount;
+            if (aFree !== bFree) return aFree ? -1 : 1;
+            return 0;
+          })
+        : [...services];
+
+      const items = getServiceItems();
+
+      // My Services section
+      const myPopulated = document.getElementById('myServicesPopulated');
+      const myBlank = document.getElementById('myServicesBlank');
+      if (myServices.length === 0) {
+        myPopulated.style.display = 'none';
+        myBlank.classList.remove('hidden');
+      } else {
+        myPopulated.style.display = '';
+        myBlank.classList.add('hidden');
+        let myHtml = '';
+        let idx = 1; // index 0 is sort button
+        myServices.forEach(s => {
+          myHtml += createServiceItem(s, idx, 'my');
+          idx++;
+        });
+        document.getElementById('myServicesList').innerHTML = myHtml;
+        document.getElementById('myCount').textContent = services.filter(s => s.enabled).length;
+      }
+
+      let allHtml = '';
+      const allStartIdx = 1 + myServices.length;
+      allServices.forEach((s, i) => {
+        allHtml += createServiceItem(s, allStartIdx + i, 'all');
+      });
+      document.getElementById('allServicesList').innerHTML = allHtml;
+
+      // Sort chip focus
+      const sortChip = document.getElementById('sortChip');
+      sortChip.classList.toggle('focused', state.focusZone === 'services' && state.focusIndex === 0);
+      sortChip.classList.toggle('active', state.currentSort !== 'popularity' && !(state.focusZone === 'services' && state.focusIndex === 0));
+      document.getElementById('sortLabel').textContent = sortLabels[state.currentSort];
+
+      // Scrubber
+      renderScrubber();
+
+      // Scroll focused item into view (skip if we just did manual scroll compensation)
+      requestAnimationFrame(() => {
+        if (!state.skipNextScrollIntoView) {
+          scrollFocusedIntoView();
+        }
+        state.skipNextScrollIntoView = false;
+        updateCustomScrollbar('scrollArea', 'customScrollbar', 'customScrollbarThumb');
+        const scrollArea = document.getElementById('scrollArea');
+        const scrollAreaWrapper = scrollArea ? scrollArea.closest('.scroll-area-wrapper') : null;
+        updateScrollMask(scrollArea, scrollAreaWrapper, 48);
+      });
+    }
+
+    // Fix 2: Custom scrollbar update
+    function updateCustomScrollbar(scrollAreaId, scrollbarId, thumbId) {
+      const scrollArea = document.getElementById(scrollAreaId);
+      const scrollbar = document.getElementById(scrollbarId);
+      const thumb = document.getElementById(thumbId);
+      if (!scrollArea || !scrollbar || !thumb) return;
+
+      // Hide main scrollbar when alphabetical sort is active (scrubber replaces it)
+      if (scrollAreaId === 'scrollArea' && state.currentSort === 'alphabetical') {
+        scrollbar.style.display = 'none';
+        return;
+      }
+
+      const scrollHeight = scrollArea.scrollHeight;
+      const clientHeight = scrollArea.clientHeight;
+
+      if (scrollHeight <= clientHeight) {
+        scrollbar.style.display = 'none';
+        return;
+      }
+      scrollbar.style.display = '';
+
+      const trackHeight = scrollbar.clientHeight;
+      const thumbHeight = Math.max(20, (clientHeight / scrollHeight) * trackHeight);
+      const scrollableRange = scrollHeight - clientHeight;
+      const thumbRange = trackHeight - thumbHeight;
+      const scrollRatio = scrollArea.scrollTop / scrollableRange;
+      const thumbTop = scrollRatio * thumbRange;
+
+      thumb.style.height = thumbHeight + 'px';
+      thumb.style.top = thumbTop + 'px';
+    }
+
+    // Dynamic gradient fade mask based on scroll position
+    function updateScrollMask(scrollEl, maskEl, fadeDistance) {
+      if (!scrollEl || !maskEl) return;
+      const top = scrollEl.scrollTop;
+      const atTop = top === 0;
+      const atBottom = top + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+      const noOverflow = scrollEl.scrollHeight <= scrollEl.clientHeight;
+      let mask;
+      if (noOverflow || (atTop && atBottom)) {
+        mask = 'none';
+      } else if (atTop) {
+        mask = `linear-gradient(to bottom, black, black calc(100% - ${fadeDistance}px), transparent)`;
+      } else if (atBottom) {
+        mask = `linear-gradient(to bottom, transparent, black ${fadeDistance}px, black)`;
+      } else {
+        mask = `linear-gradient(to bottom, transparent, black ${fadeDistance}px, black calc(100% - ${fadeDistance}px), transparent)`;
+      }
+      maskEl.style.maskImage = mask;
+      maskEl.style.webkitMaskImage = mask;
+    }
+
+    // Attach scroll listeners for custom scrollbar
+    function initScrollListeners() {
+      const scrollArea = document.getElementById('scrollArea');
+      const scrollAreaWrapper = scrollArea ? scrollArea.closest('.scroll-area-wrapper') : null;
+      if (scrollArea) {
+        scrollArea.addEventListener('scroll', () => {
+          updateCustomScrollbar('scrollArea', 'customScrollbar', 'customScrollbarThumb');
+          updateScrollMask(scrollArea, scrollAreaWrapper, 48);
+        });
+      }
+      const moreScrollArea = document.getElementById('moreScrollArea');
+      const moreScrollAreaWrapper = moreScrollArea ? moreScrollArea.closest('.scroll-area-wrapper') : null;
+      if (moreScrollArea) {
+        moreScrollArea.addEventListener('scroll', () => {
+          updateCustomScrollbar('moreScrollArea', 'moreCustomScrollbar', 'moreCustomScrollbarThumb');
+          updateScrollMask(moreScrollArea, moreScrollAreaWrapper, 48);
+        });
+      }
+    }
+
+    function getScrubberLetters() {
+      return ['✓', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+    }
+
+    function getEnabledScrubberLetters() {
+      // ✓ is enabled if there are any My Services
+      const myServices = services.filter(s => s.enabled || pendingRemovals.has(s.id));
+      const allServices = [...services].sort((a, b) => a.name.localeCompare(b.name));
+      const activeLetters = new Set(allServices.map(s => s.name.charAt(0).toUpperCase()));
+      const letters = getScrubberLetters();
+      return letters.map((l, i) => {
+        if (l === '✓') return myServices.length > 0;
+        return activeLetters.has(l);
+      });
+    }
+
+    // Spatial navigation: find closest ENABLED scrubber letter by vertical position
+    function findClosestScrubberIndexByPosition(sourceEl) {
+      if (!sourceEl) return 0;
+      const sourceRect = sourceEl.getBoundingClientRect();
+      const sourceY = sourceRect.top + sourceRect.height / 2;
+      const scrubberEl = document.getElementById('scrubber');
+      if (!scrubberEl) return 0;
+      const letterEls = scrubberEl.querySelectorAll('.scrubber-letter');
+      const enabled = getEnabledScrubberLetters();
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      letterEls.forEach((el, i) => {
+        if (!enabled[i]) return; // skip disabled
+        const rect = el.getBoundingClientRect();
+        const letterY = rect.top + rect.height / 2;
+        const dist = Math.abs(letterY - sourceY);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIdx = i;
+        }
+      });
+      return closestIdx;
+    }
+
+    // Spatial navigation: find closest service item index by vertical position
+    function findClosestServiceIndexByPosition(sourceEl) {
+      if (!sourceEl) return state.prevServiceFocusIndex;
+      const sourceRect = sourceEl.getBoundingClientRect();
+      const sourceY = sourceRect.top + sourceRect.height / 2;
+      const scrollArea = document.getElementById('scrollArea');
+      if (!scrollArea) return state.prevServiceFocusIndex;
+      const serviceEls = scrollArea.querySelectorAll('[data-item-index]');
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      serviceEls.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const itemY = rect.top + rect.height / 2;
+        const dist = Math.abs(itemY - sourceY);
+        const idx = parseInt(el.getAttribute('data-item-index'), 10);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIdx = idx;
+        }
+      });
+      return closestIdx;
+    }
+
+    function getActiveScrubberIndex() {
+      // Active = which section is currently in view based on focused service
+      // This always reflects the service list position, regardless of focusZone
+      const items = getServiceItems();
+      // Use prevServiceFocusIndex when in scrubber zone to remember where we were
+      const serviceIdx = state.focusZone === 'scrubber' ? state.prevServiceFocusIndex : state.focusIndex;
+      const item = items[serviceIdx];
+      if (!item || item.type !== 'service') return 0; // ✓ for sort chip
+      if (item.section === 'my') return 0; // ✓ for My Services
+      const firstChar = item.service.name.charAt(0).toUpperCase();
+      const letters = getScrubberLetters();
+      const idx = letters.indexOf(firstChar);
+      return idx >= 0 ? idx : 0;
+    }
+
+    function renderScrubber() {
+      const scrubberEl = document.getElementById('scrubber');
+      const panelInner = document.getElementById('panelInner');
+      if (state.currentSort !== 'alphabetical') {
+        scrubberEl.classList.remove('visible');
+        panelInner.classList.remove('scrubber-active');
+        return;
+      }
+      scrubberEl.classList.add('visible');
+      panelInner.classList.add('scrubber-active');
+      const letters = getScrubberLetters();
+      const enabled = getEnabledScrubberLetters();
+      const activeIdx = getActiveScrubberIndex();
+      const focusedIdx = state.focusZone === 'scrubber' ? state.focusIndex : -1;
+      scrubberEl.innerHTML = letters.map((l, i) => {
+        const isEnabled = enabled[i];
+        const isFocused = i === focusedIdx;
+        const isActive = i === activeIdx && !isFocused;
+        if (!isEnabled) {
+          return `<div class="scrubber-letter disabled" data-letter="${l}">${l}</div>`;
+        }
+        const classes = ['scrubber-letter'];
+        if (isFocused) classes.push('focused');
+        if (isActive) classes.push('active');
+        if (isFocused || isActive) {
+          return `<div class="${classes.join(' ')}" data-letter="${l}"><div class="scrubber-circle">${l}</div></div>`;
+        }
+        return `<div class="scrubber-letter" data-letter="${l}">${l}</div>`;
+      }).join('');
+    }
+
+    function renderSortOverlay() {
+      const drawer = document.getElementById('sortDrawer');
+      const panelCard = document.querySelector('.panel-card');
+      if (state.focusZone !== 'sort') {
+        drawer.classList.remove('visible');
+        panelCard.classList.remove('drawer-behind');
+        return;
+      }
+      drawer.classList.add('visible');
+      panelCard.classList.add('drawer-behind');
+      let html = '';
+      sortOptions.forEach((opt, i) => {
+        const isCurrent = state.currentSort === opt;
+        const isFocused = state.focusIndex === i;
+        html += `<div class="sort-option${isFocused ? ' focused' : ''}" data-sort="${opt}">
+          <span class="sort-option-label">${sortLabels[opt]}</span>
+          <div class="sort-option-icon">
+            ${isCurrent ? `<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M8 17l5 5l11-11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+          </div>
+        </div>`;
+      });
+      document.getElementById('sortOptions').innerHTML = html;
+    }
+
+    function renderMoreOptions() {
+      const panelCard = document.querySelector('.panel-card');
+      const drawer = document.getElementById('moreDrawer');
+      if (!state.moreOptionsId) {
+        panelCard.classList.remove('drawer-behind');
+        drawer.classList.remove('visible');
+        return;
+      }
+      panelCard.classList.add('drawer-behind');
+      drawer.classList.add('visible');
+
+      const s = services.find(sv => sv.id === state.moreOptionsId);
+      if (!s) return;
+      const hasChannels = s.channels && s.channels.length > 0;
+      const hasPlans = s.plans && s.plans.length > 0;
+      const hasBoth = hasChannels && hasPlans;
+      const optCount = s.optionsCount || (s.channels ? s.channels.length : 0);
+
+      // Fix H: Validate focusIndex bounds in renderMoreOptions
+      const moreItems = getMoreItems();
+      if (!state.moreTabFocused && state.focusIndex >= moreItems.length) {
+        state.focusIndex = Math.max(0, moreItems.length - 1);
+      }
+
+      // Fixed content above scroll area: header, tabs, description
+      let fixedHtml = `
+        <div class="more-opts-header">
+          <div class="service-icon" style="background: ${s.color}"><span class="placeholder">${s.label}</span></div>
+          <div>
+            <div class="service-name-large">${s.name}</div>
+            <div class="options-subtitle">${optCount} options</div>
+          </div>
+        </div>`;
+
+      if (hasBoth) {
+        const tab0Focused = state.focusZone === 'moreOptions' && state.moreTabFocused && state.moreActiveTab === 0;
+        const tab1Focused = state.focusZone === 'moreOptions' && state.moreTabFocused && state.moreActiveTab === 1;
+        fixedHtml += `<div class="tabs">
+          <button class="tab-btn ${state.moreActiveTab === 0 ? 'active' : ''}${tab0Focused ? ' tab-focused' : ''}">Add Ons & Channels</button>
+          <button class="tab-btn ${state.moreActiveTab === 1 ? 'active' : ''}${tab1Focused ? ' tab-focused' : ''}">Plans</button>
+        </div>`;
+      }
+
+      if (state.moreActiveTab === 0 && hasChannels) {
+        fixedHtml += `<div class="tab-desc">Select any add-ons or channels you have through ${s.name}.</div>`;
+      } else if (state.moreActiveTab === 1 && hasPlans) {
+        fixedHtml += `<div class="tab-desc">Different plans may have different movies and shows available in their catalogs.</div>`;
+      }
+
+      document.getElementById('moreFixedContent').innerHTML = fixedHtml;
+
+      // Scrollable content: only the items list
+      let html = '';
+      const items = getMoreItems();
+
+      if (state.moreActiveTab === 0 && hasChannels) {
+        s.channels.forEach((ch, i) => {
+          const isFocused = state.focusZone === 'moreOptions' && !state.moreTabFocused && state.focusIndex === i;
+          html += `<div class="option-row${isFocused ? ' focused' : ''}" data-more-index="${i}">
+            <div class="option-icon">${ch.name.substring(0, 3)}</div>
+            <div class="option-name${ch.selected ? ' selected' : ''}">${ch.name}</div>
+            ${checkboxSVG(ch.selected)}
+          </div>`;
+        });
+      }
+
+      if (state.moreActiveTab === 1 && hasPlans) {
+        s.plans.forEach((p, i) => {
+          const isFocused = state.focusZone === 'moreOptions' && !state.moreTabFocused && state.focusIndex === i;
+          html += `<div class="option-row plan-row${isFocused ? ' focused' : ''}" data-more-index="${i}">
+            <div class="option-name${p.selected ? ' selected' : ''}">${p.name}</div>
+            ${radioSVG(p.selected)}
+          </div>`;
+        });
+      }
+      document.getElementById('moreContent').innerHTML = html;
+
+      requestAnimationFrame(() => {
+        const moreScroll = document.getElementById('moreScrollArea');
+        const focused = moreScroll.querySelector('.option-row.focused');
+        if (focused) {
+          const elRect = focused.getBoundingClientRect();
+          const saRect = moreScroll.getBoundingClientRect();
+          const padding = 64;
+          if (elRect.bottom + padding > saRect.bottom) {
+            moreScroll.scrollTop += (elRect.bottom + padding - saRect.bottom);
+          } else if (elRect.top < saRect.top) {
+            moreScroll.scrollTop -= (saRect.top - elRect.top);
+          }
+        }
+        updateCustomScrollbar('moreScrollArea', 'moreCustomScrollbar', 'moreCustomScrollbarThumb');
+        const moreScroll2 = document.getElementById('moreScrollArea');
+        const moreWrapper = moreScroll2 ? moreScroll2.closest('.scroll-area-wrapper') : null;
+        updateScrollMask(moreScroll2, moreWrapper, 48);
+      });
+    }
+
+    // Fix J: Ensure scrollIntoView always works with null checks
+    function scrollFocusedIntoView() {
+      if (state.focusZone === 'services') {
+        const scrollArea = document.getElementById('scrollArea');
+        if (!scrollArea) return;
+        if (state.focusIndex === 0) {
+          // Sort button - scroll to top
+          scrollArea.scrollTop = 0;
+          return;
+        }
+        const el = scrollArea.querySelector(`[data-item-index="${state.focusIndex}"]`);
+        if (el) {
+          // Custom scroll with bottom padding margin
+          const elRect = el.getBoundingClientRect();
+          const saRect = scrollArea.getBoundingClientRect();
+          const padding = 64;
+          if (elRect.bottom + padding > saRect.bottom) {
+            scrollArea.scrollTop += (elRect.bottom + padding - saRect.bottom);
+          } else if (elRect.top < saRect.top) {
+            scrollArea.scrollTop -= (saRect.top - elRect.top);
+          }
+        }
+      }
+    }
+
+    // ── Toggle Service ──
+    function toggleService(id) {
+      const s = services.find(s => s.id === id);
+      if (!s) return;
+
+      const wasEnabled = s.enabled;
+      s.enabled = !s.enabled;
+
+      if (wasEnabled) {
+        // DESELECTING: toggling OFF from My Services
+        if (pendingRemovals.has(id)) {
+          clearTimeout(pendingRemovals.get(id));
+          pendingRemovals.delete(id);
+        }
+        pendingRemovals.set(id, null);
+
+        // Remember what the user is focused on by service ID + section, not index.
+        // The numeric index will shift when the My Services row is removed.
+        const currentFocusIndex = state.focusIndex;
+        const currentItems = getServiceItems();
+        const currentFocusItem = currentItems[currentFocusIndex];
+        const focusServiceId = currentFocusItem?.service?.id || null;
+        const focusSection = currentFocusItem?.section || null;
+
+        // Fix B: Lock input during animation
+        state.animating = true;
+
+        render();
+
+        const myList = document.getElementById('myServicesList');
+        const myItem = myList ? myList.querySelector(`[data-service-id="${id}"]`) : null;
+        if (myItem) {
+          myItem.classList.add('flashing');
+        }
+
+        // Fix C: Cancel any pending animation timeout
+        if (state.animTimeout) clearTimeout(state.animTimeout);
+
+        const timeout = setTimeout(() => {
+          pendingRemovals.delete(id);
+
+          // Determine next focus index by finding the same service+section
+          const postItems = getServiceItems();
+          let newIdx = -1;
+          if (focusServiceId && focusSection) {
+            // If focused item was in 'my' section (the item being removed), find the next
+            // item at the same numeric position or the one above
+            if (focusSection === 'my') {
+              newIdx = currentFocusIndex < postItems.length ? currentFocusIndex : Math.max(0, postItems.length - 1);
+            } else {
+              // Focused item was in 'all' or elsewhere — find it by ID+section
+              newIdx = postItems.findIndex(it => it.service?.id === focusServiceId && it.section === focusSection);
+            }
+          }
+          if (newIdx < 0) {
+            newIdx = currentFocusIndex < postItems.length ? currentFocusIndex : Math.max(0, postItems.length - 1);
+          }
+          state.focusIndex = newIdx;
+
+          // Scroll stability: capture focused item position, then remove item + compensate
+          // We measure BEFORE render so the focused item (which is below the removed one)
+          // is still in its pre-removal position.
+          const scrollArea = document.getElementById('scrollArea');
+          // The item being removed is still in DOM (pendingRemovals just got deleted but
+          // render hasn't run yet). Find the element that will become the focused item
+          // after render. Since the removed item is gone from getServiceItems(), the
+          // currentFocusIndex now points to the next item. But in the DOM, that item
+          // is at data-item-index = currentFocusIndex + 1 (shifted by the removed item).
+          // Instead, measure by the service ID of the new focused item.
+          const newFocusItem = postItems[state.focusIndex];
+          const newFocusSelector = newFocusItem?.service
+            ? `[data-service-id="${newFocusItem.service.id}"][data-section="${newFocusItem.section}"]`
+            : `[data-item-index="${state.focusIndex}"]`;
+          const focusedEl = scrollArea ? scrollArea.querySelector(newFocusSelector) : null;
+          const scrollRect = scrollArea ? scrollArea.getBoundingClientRect() : null;
+          const visualOffset = (focusedEl && scrollRect) ? (focusedEl.getBoundingClientRect().top - scrollRect.top) : null;
+
+          state.animating = false;
+          state.animTimeout = null;
+          state.skipNextScrollIntoView = true;
+          render();
+
+          // Compensate scroll after render — no collapse animation, instant removal
+          if (visualOffset !== null && scrollArea) {
+            void scrollArea.offsetHeight;
+            const newEl = scrollArea.querySelector(`[data-item-index="${state.focusIndex}"]`);
+            if (newEl) {
+              const newScrollRect = scrollArea.getBoundingClientRect();
+              const newVisualOffset = newEl.getBoundingClientRect().top - newScrollRect.top;
+              const shift = newVisualOffset - visualOffset;
+              if (Math.abs(shift) > 1) {
+                scrollArea.scrollTop += shift;
+              }
+            }
+            updateCustomScrollbar('scrollArea', 'customScrollbar', 'customScrollbarThumb');
+          }
+        }, 1000);
+
+        // Fix C: Store timeout ID for cancellation
+        state.animTimeout = timeout;
+        pendingRemovals.set(id, timeout);
+      } else {
+        // SELECTING: toggling ON (from All Services, or re-selecting during fade)
+        if (pendingRemovals.has(id)) {
+          // Cancel the pending removal — user is re-selecting during fade animation
+          clearTimeout(pendingRemovals.get(id));
+          pendingRemovals.delete(id);
+          // Clear animation lock since we're cancelling the deselect
+          state.animating = false;
+          state.animTimeout = null;
+          // Remove any fade/collapse classes from the My Services row
+          const myList = document.getElementById('myServicesList');
+          const myItem = myList ? myList.querySelector(`[data-service-id="${id}"]`) : null;
+          if (myItem) {
+            myItem.classList.remove('flashing', 'collapsing');
+          }
+          // Re-render in place — the service stays in My Services, focus stays put
+          render();
+          return;
+        }
+
+        // Scroll stability: keep the focused element at the same screen position.
+        // Strategy: measure the focused element's visual offset from the scroll viewport top
+        // BEFORE render, then after render, set scrollTop so the element ends up at that
+        // same visual offset. We use getBoundingClientRect relative to the scroll container's
+        // rect to avoid any browser scroll-anchoring interference (also disabled via CSS).
+        const scrollArea = document.getElementById('scrollArea');
+        const focusedEl = scrollArea ? scrollArea.querySelector(`[data-item-index="${state.focusIndex}"]`) : null;
+        const scrollRect = scrollArea ? scrollArea.getBoundingClientRect() : null;
+        // visualOffset = how far the focused element is from the top of the scroll viewport
+        const visualOffset = (focusedEl && scrollRect) ? (focusedEl.getBoundingClientRect().top - scrollRect.top) : null;
+
+        const newItems = getServiceItems();
+        const allIdx = newItems.findIndex(item => item.type === 'service' && item.service.id === id && item.section === 'all');
+        if (allIdx >= 0) {
+          state.focusIndex = allIdx;
+        }
+
+        // Tell render() not to scrollIntoView — we'll handle scroll ourselves
+        state.skipNextScrollIntoView = true;
+        render();
+
+        // Scroll compensation: force a synchronous reflow so we can measure the new position
+        // immediately after innerHTML rebuild, then adjust scrollTop before the browser paints.
+        if (visualOffset !== null && scrollArea) {
+          // Force layout reflow by reading offsetHeight
+          void scrollArea.offsetHeight;
+          const newEl = scrollArea.querySelector(`[data-item-index="${state.focusIndex}"]`);
+          if (newEl) {
+            const newScrollRect = scrollArea.getBoundingClientRect();
+            const newVisualOffset = newEl.getBoundingClientRect().top - newScrollRect.top;
+            const shift = newVisualOffset - visualOffset;
+            if (Math.abs(shift) > 1) {
+              scrollArea.scrollTop += shift;
+            }
+          }
+          updateCustomScrollbar('scrollArea', 'customScrollbar', 'customScrollbarThumb');
+        }
+
+        const myList = document.getElementById('myServicesList');
+        const myItem = myList ? myList.querySelector(`[data-service-id="${id}"]`) : null;
+        if (myItem) {
+          myItem.classList.add('entering');
+          myItem.addEventListener('animationend', () => myItem.classList.remove('entering'), { once: true });
+        }
+      }
+    }
+
+    // ── Sort ──
+    function openSortOverlay() {
+      // Fix D: Remember where we were in the services list
+      state.prevSortFocusIndex = state.focusIndex;
+      state.focusZone = 'sort';
+      state.focusIndex = sortOptions.indexOf(state.currentSort);
+      if (state.focusIndex < 0) state.focusIndex = 0;
+      renderSortOverlay();
+    }
+
+    function closeSortOverlay() {
+      state.focusZone = 'services';
+      state.focusIndex = state.prevSortFocusIndex || 0;
+      const items = getServiceItems();
+      if (state.focusIndex >= items.length) state.focusIndex = Math.max(0, items.length - 1);
+      state.subFocus = null;
+      document.getElementById('sortDrawer').classList.remove('visible');
+      document.querySelector('.panel-card').classList.remove('drawer-behind');
+      render();
+    }
+
+    function selectSort(option) {
+      state.currentSort = option;
+      closeSortOverlay();
+      render();
+    }
+
+    // ── More Options ──
+    function openMoreOptions(id) {
+      state.moreReturnServiceId = id;
+      state.moreOptionsId = id;
+      state.moreActiveTab = 0;
+      state.focusZone = 'moreOptions';
+      state.focusIndex = 0;
+      state.subFocus = null;
+      // Fix I: Reset tab focus state
+      state.moreTabFocused = false;
+      // Fix E: Reset per-tab focus positions
+      state.moreTabFocusIndex = [0, 0];
+      renderMoreOptions();
+    }
+
+    function closeMoreOptions() {
+      state.moreOptionsId = null;
+      state.focusZone = 'services';
+      state.subFocus = null;
+      // Fix I: Reset tab focus state
+      state.moreTabFocused = false;
+      // Try to restore focus to the service we came from
+      if (state.moreReturnServiceId) {
+        const items = getServiceItems();
+        const idx = items.findIndex(item => item.type === 'service' && item.service.id === state.moreReturnServiceId);
+        state.focusIndex = idx >= 0 ? idx : 1;
+      }
+      renderMoreOptions();
+      render();
+    }
+
+    function toggleChannel(serviceId, channelId) {
+      const s = services.find(s => s.id === serviceId);
+      if (s && s.channels) {
+        const ch = s.channels.find(c => c.id === channelId);
+        if (ch) ch.selected = !ch.selected;
+        renderMoreOptions();
+      }
+    }
+
+    function selectPlan(serviceId, planId) {
+      const s = services.find(s => s.id === serviceId);
+      if (s && s.plans) {
+        s.plans.forEach(p => p.selected = p.id === planId);
+        renderMoreOptions();
+      }
+    }
+
+    // ── Keyboard Navigation ──
+    document.addEventListener('keydown', function(e) {
+      // Prevent default scrolling for arrow keys
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      // Lock keyboard input during animations (allow back, Enter to re-select, and arrows to move focus)
+      if (state.animating && !['b', 'B', 'Backspace', 'Enter', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+
+      switch (state.focusZone) {
+        case 'services': handleServicesKeys(e); break;
+        case 'sort': handleSortKeys(e); break;
+        case 'moreOptions': handleMoreOptionsKeys(e); break;
+        case 'scrubber': handleScrubberKeys(e); break;
+      }
+    });
+
+    function handleServicesKeys(e) {
+      const items = getServiceItems();
+      const maxIndex = items.length - 1;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          if (state.subFocus === 'menu') state.subFocus = null;
+          if (state.focusIndex < maxIndex) {
+            state.focusIndex++;
+            render();
+          }
+          break;
+
+        case 'ArrowUp':
+          if (state.subFocus === 'menu') state.subFocus = null;
+          if (state.focusIndex > 0) {
+            state.focusIndex--;
+            render();
+          }
+          break;
+
+        case 'ArrowRight': {
+          const item = items[state.focusIndex];
+          if (item && item.type === 'service') {
+            const s = item.service;
+            const hasOptions = (s.optionsCount || 0) > 0 || (s.channels && s.channels.length > 0);
+            if (hasOptions && state.subFocus !== 'menu') {
+              // Closest to right: action button
+              state.subFocus = 'menu';
+              render();
+            } else if (state.currentSort === 'alphabetical') {
+              // Spatial: find scrubber letter closest to current element's Y position
+              // Measure BEFORE changing state/render
+              const focusedWrapper = document.querySelector(`.service-item-wrapper[data-item-index="${state.focusIndex}"]`);
+              const spatialIdx = findClosestScrubberIndexByPosition(focusedWrapper);
+              state.prevServiceFocusIndex = state.focusIndex;
+              state.focusZone = 'scrubber';
+              state.focusIndex = spatialIdx;
+              state.subFocus = null;
+              render();
+            }
+          }
+          if (item && item.type === 'sort' && state.currentSort === 'alphabetical') {
+            const sortEl = document.getElementById('sortChip');
+            const spatialIdx2 = findClosestScrubberIndexByPosition(sortEl);
+            state.prevServiceFocusIndex = state.focusIndex;
+            state.focusZone = 'scrubber';
+            state.focusIndex = spatialIdx2;
+            state.subFocus = null;
+            render();
+          }
+          break;
+        }
+
+        case 'ArrowLeft':
+          if (state.subFocus === 'menu') {
+            state.subFocus = null;
+            render();
+          }
+          break;
+
+        case 'Enter': {
+          const item = items[state.focusIndex];
+          if (!item) break;
+          if (item.type === 'sort') {
+            openSortOverlay();
+          } else if (item.type === 'service') {
+            if (state.subFocus === 'menu') {
+              // Open more options
+              openMoreOptions(item.service.id);
+            } else {
+              // Toggle switch
+              toggleService(item.service.id);
+            }
+          }
+          break;
+        }
+
+        case 'b':
+        case 'B':
+        case 'Backspace':
+          // No back action in main services view
+          break;
+      }
+    }
+
+    function handleSortKeys(e) {
+      switch (e.key) {
+        case 'ArrowDown':
+          if (state.focusIndex < sortOptions.length - 1) {
+            state.focusIndex++;
+            renderSortOverlay();
+          }
+          break;
+        case 'ArrowUp':
+          if (state.focusIndex > 0) {
+            state.focusIndex--;
+            renderSortOverlay();
+          }
+          break;
+        case 'Enter':
+          selectSort(sortOptions[state.focusIndex]);
+          break;
+        case 'b':
+        case 'B':
+        case 'Backspace':
+          closeSortOverlay();
+          break;
+      }
+    }
+
+    function handleMoreOptionsKeys(e) {
+      const s = services.find(sv => sv.id === state.moreOptionsId);
+      if (!s) return;
+      const hasChannels = s.channels && s.channels.length > 0;
+      const hasPlans = s.plans && s.plans.length > 0;
+      const hasBoth = hasChannels && hasPlans;
+      const items = getMoreItems();
+
+      // Fix H: Validate focusIndex bounds
+      if (state.focusIndex >= items.length) {
+        state.focusIndex = Math.max(0, items.length - 1);
+      }
+
+      const maxIndex = items.length - 1;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          // Fix I: If on tab bar, move down to first item
+          if (state.moreTabFocused) {
+            state.moreTabFocused = false;
+            state.focusIndex = 0;
+            renderMoreOptions();
+          } else if (state.focusIndex < maxIndex) {
+            state.focusIndex++;
+            renderMoreOptions();
+          }
+          break;
+
+        case 'ArrowUp':
+          if (state.moreTabFocused) {
+            // Already on tab bar — scroll back to top to show header
+            const moreScroll = document.getElementById('moreScrollArea');
+            if (moreScroll) moreScroll.scrollTop = 0;
+          } else if (state.focusIndex === 0 && hasBoth) {
+            // At first item with tabs — move to tab bar and scroll tabs into view
+            state.moreTabFocused = true;
+            renderMoreOptions();
+            requestAnimationFrame(() => {
+              const moreScroll = document.getElementById('moreScrollArea');
+              const tabs = moreScroll ? moreScroll.querySelector('.tabs') : null;
+              if (tabs && moreScroll) {
+                const tabsRect = tabs.getBoundingClientRect();
+                const scrollRect = moreScroll.getBoundingClientRect();
+                if (tabsRect.top < scrollRect.top) {
+                  moreScroll.scrollTop -= (scrollRect.top - tabsRect.top + 24);
+                }
+              }
+            });
+          } else if (state.focusIndex === 0 && !hasBoth) {
+            // At first item without tabs — scroll to top
+            const moreScroll2 = document.getElementById('moreScrollArea');
+            if (moreScroll2) moreScroll2.scrollTop = 0;
+          } else if (state.focusIndex > 0) {
+            state.focusIndex--;
+            renderMoreOptions();
+          }
+          break;
+
+        case 'ArrowRight':
+          if (hasBoth && state.moreActiveTab === 0) {
+            // Save current tab's focus position before switching
+            state.moreTabFocusIndex[state.moreActiveTab] = state.focusIndex;
+            state.moreActiveTab = 1;
+            // Restore new tab's focus position (validate bounds)
+            const newItemsR = getMoreItems();
+            if (!state.moreTabFocused) {
+              // Focused on items: stay in items zone, just switch active tab
+              state.focusIndex = Math.min(state.moreTabFocusIndex[state.moreActiveTab], newItemsR.length - 1);
+              if (state.focusIndex < 0) state.focusIndex = 0;
+            }
+            renderMoreOptions();
+          }
+          break;
+
+        case 'ArrowLeft':
+          if (hasBoth && state.moreActiveTab === 1) {
+            // Save current tab's focus position before switching
+            state.moreTabFocusIndex[state.moreActiveTab] = state.focusIndex;
+            state.moreActiveTab = 0;
+            // Restore new tab's focus position (validate bounds)
+            const newItemsL = getMoreItems();
+            if (!state.moreTabFocused) {
+              // Focused on items: stay in items zone, just switch active tab
+              state.focusIndex = Math.min(state.moreTabFocusIndex[state.moreActiveTab], newItemsL.length - 1);
+              if (state.focusIndex < 0) state.focusIndex = 0;
+            }
+            renderMoreOptions();
+          }
+          break;
+
+        case 'Enter': {
+          // Fix I: Enter on tab bar does nothing (tab is already selected)
+          if (state.moreTabFocused) break;
+          const item = items[state.focusIndex];
+          if (!item) break;
+          if (item.type === 'channel') {
+            toggleChannel(item.serviceId, item.channel.id);
+          } else if (item.type === 'plan') {
+            selectPlan(item.serviceId, item.plan.id);
+          }
+          break;
+        }
+
+        case 'b':
+        case 'B':
+        case 'Backspace':
+          closeMoreOptions();
+          break;
+      }
+    }
+
+    function handleScrubberKeys(e) {
+      const letters = getScrubberLetters();
+      const enabled = getEnabledScrubberLetters();
+
+      function nextEnabled(from, dir) {
+        let i = from + dir;
+        while (i >= 0 && i < letters.length) {
+          if (enabled[i]) return i;
+          i += dir;
+        }
+        return from; // stay put if nothing found
+      }
+
+      switch (e.key) {
+        case 'ArrowDown': {
+          const next = nextEnabled(state.focusIndex, 1);
+          if (next !== state.focusIndex) {
+            state.focusIndex = next;
+            renderScrubber();
+          }
+          break;
+        }
+
+        case 'ArrowUp': {
+          const prev = nextEnabled(state.focusIndex, -1);
+          if (prev !== state.focusIndex) {
+            state.focusIndex = prev;
+            renderScrubber();
+          }
+          break;
+        }
+
+        case 'ArrowLeft': {
+          // Spatial: find the closest service row to the left by vertical position
+          const focusedLetterEl = document.querySelector('.scrubber-letter.focused');
+          const closestServiceIdx = findClosestServiceIndexByPosition(focusedLetterEl);
+          state.focusZone = 'services';
+          state.focusIndex = closestServiceIdx;
+          const itemsL = getServiceItems();
+          if (state.focusIndex >= itemsL.length) state.focusIndex = Math.max(0, itemsL.length - 1);
+          const leftItem = itemsL[state.focusIndex];
+          // If the service has an action button, that's the closest element to the left of the scrubber
+          if (leftItem && leftItem.type === 'service') {
+            const s = leftItem.service;
+            const hasOptions = (s.optionsCount || 0) > 0 || (s.channels && s.channels.length > 0);
+            state.subFocus = hasOptions ? 'menu' : null;
+          } else {
+            state.subFocus = null;
+          }
+          render();
+          break;
+        }
+
+        case 'Enter': {
+          const letter = letters[state.focusIndex];
+          if (letter === '✓') {
+            // Scroll to My Services section (top)
+            const scrollArea = document.getElementById('scrollArea');
+            if (scrollArea) scrollArea.scrollTop = 0;
+          } else {
+            scrollToLetter(letter);
+          }
+          break;
+        }
+
+        case 'b':
+        case 'B':
+        case 'Backspace': {
+          // Fix F: Restore saved services focus position
+          state.focusZone = 'services';
+          state.focusIndex = state.prevServiceFocusIndex;
+          // Validate bounds
+          const itemsB = getServiceItems();
+          if (state.focusIndex >= itemsB.length) state.focusIndex = Math.max(0, itemsB.length - 1);
+          state.subFocus = null;
+          render();
+          break;
+        }
+      }
+    }
+
+    function scrollToLetter(letter) {
+      // Find first service in allServices starting with this letter
+      const items = getServiceItems();
+      const idx = items.findIndex(item =>
+        item.type === 'service' && item.section === 'all' && item.service.name.toUpperCase().startsWith(letter)
+      );
+      if (idx >= 0) {
+        // Switch focus to services zone at that index
+        state.focusZone = 'services';
+        state.focusIndex = idx;
+        state.subFocus = null;
+        render();
+      }
+    }
+
+    // ── Initial render ──
+    initScrollListeners();
+    render();
+  </script>
+</body>
+</html>
