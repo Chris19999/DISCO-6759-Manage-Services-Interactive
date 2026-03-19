@@ -1020,6 +1020,11 @@
         myPopulated.style.display = '';
         myBlank.classList.add('hidden');
         document.getElementById('myServicesList').innerHTML = myServices.map(s => createServiceItem(s)).join('');
+        // Re-apply flashing class to any services mid-fade (pendingRemovals)
+        pendingRemovals.forEach((timeout, sid) => {
+          const el = document.getElementById('myServicesList').querySelector(`[data-service-id="${sid}"]`);
+          if (el) el.classList.add('flashing');
+        });
         document.getElementById('myCount').textContent = services.filter(s => s.enabled).length;
       }
 
@@ -1070,19 +1075,8 @@
         if (myItem) myItem.classList.add('flashing');
 
         const timeout = setTimeout(() => {
-          const myList2 = document.getElementById('myServicesList');
-          const myItem2 = myList2 ? myList2.querySelector(`[data-service-id="${id}"]`) : null;
-          if (myItem2) {
-            myItem2.classList.remove('flashing');
-            myItem2.classList.add('collapsing');
-            myItem2.addEventListener('animationend', () => {
-              pendingRemovals.delete(id);
-              render(id);
-            }, { once: true });
-          } else {
-            pendingRemovals.delete(id);
-            render(id);
-          }
+          pendingRemovals.delete(id);
+          render(id);
         }, 1000);
         pendingRemovals.set(id, timeout);
       } else {
