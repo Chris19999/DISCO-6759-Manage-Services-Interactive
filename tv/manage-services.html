@@ -45,6 +45,48 @@
     }
 
     /* Fix 6: Sheet container — flush right, 864px wide, full height */
+    .tv-panel-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9;
+    }
+    .tv-controls {
+      position: fixed;
+      left: 48px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 11;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      opacity: 0.6;
+    }
+    .tv-control-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tv-control-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.05);
+    }
+    .tv-control-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
     .tv-panel {
       position: fixed;
       top: 0;
@@ -53,6 +95,7 @@
       width: 864px;
       display: flex;
       flex-direction: column;
+      z-index: 10;
     }
 
     /* Fix 6 + Fix 1: Inner panel card with 32px margin and correct bg */
@@ -463,12 +506,18 @@
     /* Nested drawer: main panel scales back when more-options opens */
     .panel-card {
       transform-origin: center right;
-      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
     }
     .panel-card.drawer-behind {
       transform: scale(0.96) translateX(-80px);
-      opacity: 0.5;
       pointer-events: none;
+    }
+    .panel-inner {
+      filter: none;
+      transition: filter 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .panel-card.drawer-behind .panel-inner {
+      filter: blur(8px);
     }
 
     /* More Options panel — nested drawer, right-aligned within .tv-panel */
@@ -843,6 +892,27 @@
     </div>
   </div>
 
+  <div class="tv-controls">
+    <div class="tv-control-row">
+      <div class="tv-control-key">↑</div>
+      <div class="tv-control-key">↓</div>
+      <div class="tv-control-label">Navigate</div>
+    </div>
+    <div class="tv-control-row">
+      <div class="tv-control-key">←</div>
+      <div class="tv-control-key">→</div>
+      <div class="tv-control-label">Move focus</div>
+    </div>
+    <div class="tv-control-row">
+      <div class="tv-control-key">Enter</div>
+      <div class="tv-control-label">Select</div>
+    </div>
+    <div class="tv-control-row">
+      <div class="tv-control-key">⌫</div>
+      <div class="tv-control-label">Back</div>
+    </div>
+  </div>
+  <div class="tv-panel-backdrop"></div>
   <!-- Fix 6: .tv-panel is the sheet (864px flush right), .panel-card is the inner rounded panel -->
   <div class="tv-panel">
     <div class="panel-card">
@@ -1113,12 +1183,14 @@
     }
 
     function render() {
-      // Fix A: Bounds validation
-      const _items = getServiceItems();
-      if (state.focusIndex >= _items.length) {
-        state.focusIndex = Math.max(0, _items.length - 1);
+      // Fix A: Bounds validation (only for services zone — scrubber/sort have different index ranges)
+      if (state.focusZone === 'services') {
+        const _items = getServiceItems();
+        if (state.focusIndex >= _items.length) {
+          state.focusIndex = Math.max(0, _items.length - 1);
+        }
+        if (state.focusIndex < 0) state.focusIndex = 0;
       }
-      if (state.focusIndex < 0) state.focusIndex = 0;
 
       const myServices = services.filter(s => s.enabled || pendingRemovals.has(s.id));
       const allServices = state.currentSort === 'alphabetical'
@@ -1274,14 +1346,17 @@
 
     // Spatial navigation: find closest ENABLED scrubber letter by vertical position
     function findClosestScrubberIndexByPosition(sourceEl) {
-      if (!sourceEl) return 0;
+      const enabled = getEnabledScrubberLetters();
+      // Fallback: first enabled letter
+      const firstEnabled = enabled.indexOf(true);
+      if (firstEnabled === -1) return 0;
+      if (!sourceEl) return firstEnabled;
       const sourceRect = sourceEl.getBoundingClientRect();
       const sourceY = sourceRect.top + sourceRect.height / 2;
       const scrubberEl = document.getElementById('scrubber');
-      if (!scrubberEl) return 0;
+      if (!scrubberEl) return firstEnabled;
       const letterEls = scrubberEl.querySelectorAll('.scrubber-letter');
-      const enabled = getEnabledScrubberLetters();
-      let closestIdx = 0;
+      let closestIdx = firstEnabled;
       let closestDist = Infinity;
       letterEls.forEach((el, i) => {
         if (!enabled[i]) return; // skip disabled
