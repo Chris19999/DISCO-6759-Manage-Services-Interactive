@@ -1222,6 +1222,11 @@
           idx++;
         });
         document.getElementById('myServicesList').innerHTML = myHtml;
+        // Re-apply flashing class to any services mid-fade (pendingRemovals)
+        pendingRemovals.forEach((timeout, sid) => {
+          const el = document.getElementById('myServicesList').querySelector(`[data-service-id="${sid}"]`);
+          if (el) el.classList.add('flashing');
+        });
         document.getElementById('myCount').textContent = services.filter(s => s.enabled).length;
       }
 
@@ -1621,9 +1626,6 @@
           myItem.classList.add('flashing');
         }
 
-        // Fix C: Cancel any pending animation timeout
-        if (state.animTimeout) clearTimeout(state.animTimeout);
-
         const timeout = setTimeout(() => {
           pendingRemovals.delete(id);
 
@@ -1631,12 +1633,9 @@
           const postItems = getServiceItems();
           let newIdx = -1;
           if (focusServiceId && focusSection) {
-            // If focused item was in 'my' section (the item being removed), find the next
-            // item at the same numeric position or the one above
             if (focusSection === 'my') {
               newIdx = currentFocusIndex < postItems.length ? currentFocusIndex : Math.max(0, postItems.length - 1);
             } else {
-              // Focused item was in 'all' or elsewhere — find it by ID+section
               newIdx = postItems.findIndex(it => it.service?.id === focusServiceId && it.section === focusSection);
             }
           }
@@ -1645,16 +1644,7 @@
           }
           state.focusIndex = newIdx;
 
-          // Scroll stability: capture focused item position, then remove item + compensate
-          // We measure BEFORE render so the focused item (which is below the removed one)
-          // is still in its pre-removal position.
           const scrollArea = document.getElementById('scrollArea');
-          // The item being removed is still in DOM (pendingRemovals just got deleted but
-          // render hasn't run yet). Find the element that will become the focused item
-          // after render. Since the removed item is gone from getServiceItems(), the
-          // currentFocusIndex now points to the next item. But in the DOM, that item
-          // is at data-item-index = currentFocusIndex + 1 (shifted by the removed item).
-          // Instead, measure by the service ID of the new focused item.
           const newFocusItem = postItems[state.focusIndex];
           const newFocusSelector = newFocusItem?.service
             ? `[data-service-id="${newFocusItem.service.id}"][data-section="${newFocusItem.section}"]`
@@ -1663,12 +1653,13 @@
           const scrollRect = scrollArea ? scrollArea.getBoundingClientRect() : null;
           const visualOffset = (focusedEl && scrollRect) ? (focusedEl.getBoundingClientRect().top - scrollRect.top) : null;
 
-          state.animating = false;
-          state.animTimeout = null;
+          // Only clear animating if no more pending removals
+          if (pendingRemovals.size === 0) {
+            state.animating = false;
+          }
           state.skipNextScrollIntoView = true;
           render();
 
-          // Compensate scroll after render — no collapse animation, instant removal
           if (visualOffset !== null && scrollArea) {
             void scrollArea.offsetHeight;
             const newEl = scrollArea.querySelector(`[data-item-index="${state.focusIndex}"]`);
@@ -1684,8 +1675,6 @@
           }
         }, 1000);
 
-        // Fix C: Store timeout ID for cancellation
-        state.animTimeout = timeout;
         pendingRemovals.set(id, timeout);
       } else {
         // SELECTING: toggling ON (from All Services, or re-selecting during fade)
@@ -1693,9 +1682,10 @@
           // Cancel the pending removal — user is re-selecting during fade animation
           clearTimeout(pendingRemovals.get(id));
           pendingRemovals.delete(id);
-          // Clear animation lock since we're cancelling the deselect
-          state.animating = false;
-          state.animTimeout = null;
+          // Clear animation lock only if no other pending removals
+          if (pendingRemovals.size === 0) {
+            state.animating = false;
+          }
           // Remove any fade/collapse classes from the My Services row
           const myList = document.getElementById('myServicesList');
           const myItem = myList ? myList.querySelector(`[data-service-id="${id}"]`) : null;
