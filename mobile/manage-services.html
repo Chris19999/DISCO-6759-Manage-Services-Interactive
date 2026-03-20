@@ -1167,6 +1167,7 @@
         const ch = s.channels.find(c => c.id === channelId);
         if (ch) ch.selected = !ch.selected;
         renderMoreSheet();
+        render();
       }
     }
     function selectPlan(serviceId, planId) {
@@ -1174,6 +1175,7 @@
       if (s && s.plans) {
         s.plans.forEach(p => p.selected = p.id === planId);
         renderMoreSheet();
+        render();
       }
     }
     function renderMoreSheet() {
