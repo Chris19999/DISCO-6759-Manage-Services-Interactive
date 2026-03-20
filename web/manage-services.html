@@ -55,6 +55,8 @@
       position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
     /* Modal frame */
@@ -295,9 +297,9 @@
       background: #000;
       border-radius: var(--radii-m);
       padding: 4px 8px;
-      font-size: 10px;
+      font-size: 12px;
       color: #fff;
-      font-weight: 500;
+      font-weight: 600;
       font-family: var(--font-body);
       line-height: 16px;
     }
@@ -445,7 +447,8 @@
     .sub-channel-row {
       display: flex;
       align-items: center;
-      padding: 8px 8px 8px 16px;
+      padding: 8px;
+      margin-left: 8px;
       border-radius: var(--radii-m);
       cursor: pointer;
       transition: background 0.15s;
@@ -626,7 +629,7 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     .blank-state-title { padding: 8px 0; }
-    .blank-state-heading { margin-bottom: 4px; font-weight: 600; font-size: 14px; color: var(--color-text-primary); font-family: var(--font-heading); }
+    .blank-state-heading { margin-bottom: 4px; font-weight: 600; font-size: 14px; color: var(--color-text-default); font-family: var(--font-heading); }
     .blank-state-body { font-size: 12px; color: var(--color-text-muted); line-height: 16px; }
 
     svg { display: block; }
@@ -637,126 +640,15 @@
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: #1a1a1a;
-      padding: 0;
+      background: url('bg.png') center/cover no-repeat;
+      background-color: #1a1a1a;
       overflow: hidden;
-    }
-    .bg-browser-bar {
-      height: 36px;
-      background: #2a2a2a;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      gap: 8px;
-    }
-    .bg-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .bg-dot.red { background: #ff5f56; }
-    .bg-dot.yellow { background: #ffbd2e; }
-    .bg-dot.green { background: #27c93f; }
-    .bg-url-bar {
-      flex: 1;
-      height: 22px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 4px;
-      margin-left: 60px;
-      margin-right: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: rgba(255,255,255,0.4);
-    }
-    .bg-plex-nav {
-      height: 48px;
-      background: #181818;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .bg-plex-logo {
-      font-size: 20px;
-      font-weight: 700;
-      color: #e5a00d;
-      font-family: var(--font-heading);
-      letter-spacing: 2px;
-      margin-right: 24px;
-    }
-    .bg-plex-nav-item {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      font-family: var(--font-body);
-    }
-    .bg-plex-nav-item.active { color: #fff; }
-    .bg-page {
-      padding: 32px;
-    }
-    .bg-row-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 12px;
-      font-family: var(--font-body);
-    }
-    .bg-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-    .bg-card {
-      width: 160px;
-      height: 90px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 6px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.1);
-      font-size: 10px;
-      font-family: var(--font-body);
-      text-transform: uppercase;
-      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
   <!-- Placeholder background content -->
-  <div class="bg-content">
-    <div class="bg-browser-bar">
-      <div class="bg-dot red"></div>
-      <div class="bg-dot yellow"></div>
-      <div class="bg-dot green"></div>
-      <div class="bg-url-bar">watch.plex.tv</div>
-    </div>
-    <div class="bg-plex-nav">
-      <div class="bg-plex-logo">plex</div>
-      <div class="bg-plex-nav-item active">Home</div>
-      <div class="bg-plex-nav-item">Libraries</div>
-      <div class="bg-plex-nav-item">Live TV</div>
-      <div class="bg-plex-nav-item">On Demand</div>
-      <div class="bg-plex-nav-item">Discover</div>
-    </div>
-    <div class="bg-page">
-      <div class="bg-row-title">Title ›</div>
-      <div class="bg-row">
-        <div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div>
-      </div>
-      <div class="bg-row-title">Title ›</div>
-      <div class="bg-row">
-        <div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div>
-      </div>
-      <div class="bg-row-title">Title ›</div>
-      <div class="bg-row">
-        <div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div>
-      </div>
-      <div class="bg-row-title">Title ›</div>
-      <div class="bg-row">
-        <div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div><div class="bg-card">Image</div>
-      </div>
-    </div>
-  </div>
+  <div class="bg-content"></div>
 
   <div class="modal-overlay">
     <div class="modal-backdrop"></div>
@@ -825,7 +717,7 @@
                   <div class="section-header">
                     <div class="section-title-row">
                       <span class="section-title">My Services</span>
-                      <span class="badge" id="myCount">2</span>
+                      <span class="badge" id="myCount">0</span>
                     </div>
                     <button class="toggle-btn" id="toggleBtn" onclick="toggleMyServices()">
                       <span id="toggleLabel">Hide</span>
@@ -877,20 +769,20 @@
 
   <script>
     const services = [
-      { id: 'netflix', name: 'Netflix', color: '#E50914', label: 'NETFLIX', enabled: true, optionsCount: 12,
+      { id: 'netflix', name: 'Netflix', color: '#E50914', label: 'NETFLIX', enabled: false, optionsCount: 12,
         channels: [
           { id:'ch1', name:'Channel 1', selected: false },
-          { id:'ch2', name:'Channel 2', selected: true },
+          { id:'ch2', name:'Channel 2', selected: false },
           { id:'ch3', name:'Channel 3', selected: false },
-          { id:'ch4', name:'Channel 3', selected: true },
+          { id:'ch4', name:'Channel 3', selected: false },
         ],
         plans: [
           { id:'basic', name:'Basic Plan', selected: false },
-          { id:'standard', name:'Standard Plan', selected: true },
+          { id:'standard', name:'Standard Plan', selected: false },
           { id:'premium', name:'Premium Plan', selected: false },
         ]
       },
-      { id: 'apple-tv', name: 'Apple TV', color: '#000', label: 'tv', enabled: true,
+      { id: 'apple-tv', name: 'Apple TV', color: '#000', label: 'tv', enabled: false,
         channels: [
           { id:'atv-acorn-tv', name:'Acorn TV', selected: false },
           { id:'atv-britbox', name:'BritBox', selected: false },
@@ -987,7 +879,7 @@
             </div>
             <div class="service-info">
               <div class="service-name${service.enabled ? ' selected' : ''}">${service.name}</div>
-              ${showSubtitle && !dimmed ? `<div class="service-subtitle">${service.optionsCount} options</div>` : ''}
+              ${showSubtitle && !dimmed ? `<div class="service-subtitle">${(service.channels ? service.channels.filter(c => c.selected).length : 0)} add-ons enabled</div>` : ''}
             </div>
           </div>
           ${showDivider ? '<div class="service-divider"></div>' : '<div class="service-spacer"></div>'}
@@ -1321,7 +1213,6 @@
         <div class="more-opts-service-header">
           <div class="service-icon" style="background: ${s.color}"><span class="placeholder">${s.label}</span></div>
           <div class="service-name" style="flex:1;color:white">${s.name}</div>
-          <div class="switch ${s.enabled ? 'active' : ''}" onclick="toggleService('${s.id}')"><div class="thumb"></div></div>
         </div>
         <div class="more-opts-divider"></div>`;
 
@@ -1335,7 +1226,7 @@
       html += `<div class="tab-content ${s.enabled ? '' : 'dimmed'}">`;
 
       if ((state.moreActiveTab === 0 && hasChannels) || (!hasPlans && hasChannels)) {
-        html += `<div class="tab-desc">Select any add-ons or channels you have through ${s.name}.</div>`;
+        html += `<div class="tab-desc">Select any channels or add-ons you have through ${s.name} to prioritize content with availabilities your channels & add-ons.</div>`;
         s.channels.forEach(ch => {
           html += `<div class="option-row" onclick="toggleChannel('${s.id}','${ch.id}')">
             <div class="option-icon">${ch.name.substring(0,3)}</div>

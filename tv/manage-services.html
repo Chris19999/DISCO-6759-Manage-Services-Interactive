@@ -49,6 +49,8 @@
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index: 9;
     }
     .tv-controls {
@@ -734,7 +736,7 @@
       margin-bottom: 8px;
       font-weight: 600;
       font-size: 20px;
-      color: var(--color-text-primary);
+      color: var(--color-text-default);
     }
     .blank-state-body {
       font-size: 16px;
@@ -812,85 +814,15 @@
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: #1a1a1a;
-      padding: 48px;
+      background: url('bg.png') center/cover no-repeat;
+      background-color: #1a1a1a;
       overflow: hidden;
-    }
-    .bg-nav {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      margin-bottom: 48px;
-    }
-    .bg-nav-logo {
-      font-size: 28px;
-      font-weight: 700;
-      color: #e5a00d;
-      font-family: var(--font-heading);
-      letter-spacing: 2px;
-    }
-    .bg-nav-item {
-      font-size: 16px;
-      color: rgba(255,255,255,0.5);
-      font-family: var(--font-body);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .bg-nav-item.active { color: #fff; }
-    .bg-row-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 16px;
-      font-family: var(--font-body);
-    }
-    .bg-row {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 40px;
-    }
-    .bg-card {
-      width: 240px;
-      height: 135px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 8px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.15);
-      font-size: 12px;
-      font-family: var(--font-body);
-      text-transform: uppercase;
-      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
   <!-- Placeholder background content (Plex browse page) -->
-  <div class="bg-content">
-    <div class="bg-nav">
-      <div class="bg-nav-logo">plex</div>
-      <div class="bg-nav-item active">Home</div>
-      <div class="bg-nav-item">Libraries</div>
-      <div class="bg-nav-item">Live TV</div>
-    </div>
-    <div class="bg-row-title">Title ›</div>
-    <div class="bg-row">
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-    </div>
-    <div class="bg-row-title">Title ›</div>
-    <div class="bg-row">
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-      <div class="bg-card">Image Placeholder</div>
-    </div>
-  </div>
+  <div class="bg-content"></div>
 
   <div class="tv-controls">
     <div class="tv-control-row">
@@ -929,7 +861,7 @@
                 <div class="section-header">
                   <div class="section-title-row">
                     <span class="section-title">My Services</span>
-                    <span class="badge" id="myCount">2</span>
+                    <span class="badge" id="myCount">0</span>
                   </div>
                   <button class="sort-chip" id="sortChip" tabindex="-1">
                     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" class="sort-icon"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -996,20 +928,20 @@
   <script>
     // ── Data (same as mobile) ──
     const services = [
-      { id: 'netflix', name: 'Netflix', color: '#E50914', label: 'NETFLIX', enabled: true, optionsCount: 12,
+      { id: 'netflix', name: 'Netflix', color: '#E50914', label: 'NETFLIX', enabled: false, optionsCount: 12,
         channels: [
           { id:'ch1', name:'Channel 1', selected: false },
-          { id:'ch2', name:'Channel 2', selected: true },
+          { id:'ch2', name:'Channel 2', selected: false },
           { id:'ch3', name:'Channel 3', selected: false },
-          { id:'ch4', name:'Channel 4', selected: true },
+          { id:'ch4', name:'Channel 4', selected: false },
         ],
         plans: [
           { id:'basic', name:'Basic Plan', selected: false },
-          { id:'standard', name:'Standard Plan', selected: true },
+          { id:'standard', name:'Standard Plan', selected: false },
           { id:'premium', name:'Premium Plan', selected: false },
         ]
       },
-      { id: 'apple-tv', name: 'Apple TV+', color: '#000', label: 'tv', enabled: true,
+      { id: 'apple-tv', name: 'Apple TV+', color: '#000', label: 'tv', enabled: false,
         channels: [
           { id:'atv-acorn-tv', name:'Acorn TV', selected: false },
           { id:'atv-britbox', name:'BritBox', selected: false },
@@ -1158,7 +1090,7 @@
             </div>
             <div class="service-info">
               <div class="service-name${service.enabled ? ' selected' : ''}">${service.name}</div>
-              ${showSubtitle ? `<div class="service-subtitle ${service.enabled ? 'subtitle-selected' : 'subtitle-unselected'}">${optCount} options</div>` : ''}
+              ${showSubtitle ? `<div class="service-subtitle ${service.enabled ? 'subtitle-selected' : 'subtitle-unselected'}">${service.enabled ? (service.channels ? service.channels.filter(c => c.selected).length : 0) + ' add-ons enabled' : optCount + ' options'}</div>` : ''}
             </div>
           </div>
           <div class="service-spacer"></div>
@@ -1513,7 +1445,7 @@
       }
 
       if (state.moreActiveTab === 0 && hasChannels) {
-        fixedHtml += `<div class="tab-desc">Select any add-ons or channels you have through ${s.name}.</div>`;
+        fixedHtml += `<div class="tab-desc">Select any channels or add-ons you have through ${s.name} to prioritize content with availabilities your channels & add-ons.</div>`;
       } else if (state.moreActiveTab === 1 && hasPlans) {
         fixedHtml += `<div class="tab-desc">Different plans may have different movies and shows available in their catalogs.</div>`;
       }
