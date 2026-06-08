@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=393, initial-scale=1.0" />
+  <title>Home — Mobile Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face { font-family:'PlexCircular'; src:url('plexcircular-bold.woff2') format('woff2'); font-weight:700; font-style:normal; }
+    :root {
+      --color-surface:#000; --color-card:rgba(0,0,0,.3); --color-control:rgba(255,255,255,.1);
+      --color-text-primary:#fff; --color-text-default:rgba(255,255,255,.8); --color-text-muted:rgba(255,255,255,.5);
+      --color-accent:#e5a00d; --color-divider:rgba(255,255,255,.1); --color-bg-outer:#1a1a1a;
+      --ub-tl:#171717; --ub-tr:#1c1c1c; --ub-br:#414141; --ub-bl:#272727;
+      --font-heading:'PlexCircular','Inter',sans-serif; --font-body:'Inter',sans-serif;
+      --radii-s:4px; --radii-m:8px; --radii-l:16px; --radii-max:9999px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--font-body); background:var(--color-bg-outer); display:flex; justify-content:center; padding:20px; }
+    .phone-frame { width:393px; height:854px; background:var(--color-surface); border-radius:40px; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+    .ultrablur-bg { position:absolute; inset:0; z-index:0;
+      background:
+        radial-gradient(ellipse at 0% 0%, var(--ub-tl), transparent 95%),
+        radial-gradient(ellipse at 100% 0%, var(--ub-tr), transparent 95%),
+        radial-gradient(ellipse at 100% 100%, var(--ub-br), transparent 95%),
+        radial-gradient(ellipse at 0% 100%, var(--ub-bl), transparent 95%),
+        var(--color-surface); }
+    .status-bar { height:34px; padding:8px 16px; display:flex; justify-content:space-between; align-items:center; color:var(--color-text-primary); font-size:12px; font-weight:600; position:relative; z-index:1; }
+
+    .home-top { display:flex; align-items:center; gap:14px; padding:6px 18px 12px; position:relative; z-index:1; }
+    .plex-logo { font-family:var(--font-heading); font-weight:700; font-size:24px; color:var(--color-accent); letter-spacing:.01em; }
+    .home-top .spacer { flex:1; }
+    .icon-btn { width:34px; height:34px; border:none; background:none; color:var(--color-text-primary); display:grid; place-items:center; cursor:pointer; }
+    .avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#f74366,#e5a00d); }
+    .tabs-row { display:flex; gap:22px; padding:0 18px 10px; position:relative; z-index:1; }
+    .tabs-row .tab { font-size:15px; font-weight:600; color:var(--color-text-muted); padding-bottom:8px; border-bottom:2px solid transparent; cursor:pointer; }
+    .tabs-row .tab.active { color:var(--color-text-primary); border-bottom-color:var(--color-accent); }
+
+    .content { flex:1; overflow-y:auto; padding:8px 0 24px; position:relative; z-index:1; scrollbar-width:none; }
+    .content::-webkit-scrollbar { display:none; }
+
+    /* dismissible sync banner */
+    .sync-banner { margin:6px 18px 4px; padding:14px; border-radius:var(--radii-l); position:relative;
+      background:linear-gradient(160deg,rgba(229,160,13,.16),rgba(21,169,252,.10)),rgba(255,255,255,.04);
+      border:1px solid rgba(229,160,13,.28); }
+    .sync-banner .sb-top { display:flex; gap:12px; align-items:flex-start; }
+    .sync-banner .sb-ic { flex:0 0 auto; width:34px; height:34px; border-radius:var(--radii-m); display:grid; place-items:center; background:rgba(229,160,13,.2); color:var(--color-accent); }
+    .sync-banner .sb-tx { flex:1; font-size:13px; line-height:18px; color:var(--color-text-muted); }
+    .sync-banner .sb-tx b { display:block; font-family:var(--font-heading); font-size:15px; font-weight:700; color:var(--color-text-primary); margin-bottom:3px; }
+    .sync-banner .sb-x { flex:0 0 auto; width:24px; height:24px; margin:-2px -2px 0 0; border:none; background:none; color:var(--color-text-muted); display:grid; place-items:center; border-radius:var(--radii-max); cursor:pointer; }
+    .sync-banner .sb-cta { margin-top:12px; width:100%; border:none; border-radius:var(--radii-max); background:#fff; color:#1c1c1c;
+      font-family:var(--font-body); font-size:14px; font-weight:700; padding:11px 16px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+    .sync-banner .sb-cta:active { background:#e9e9e9; }
+
+    .row { margin-top:18px; }
+    .row:first-child { margin-top:6px; }
+    .row-head { display:flex; align-items:center; gap:8px; padding:0 18px 12px; }
+    .row-head h2 { margin:0; font-family:var(--font-heading); font-weight:700; font-size:18px; color:var(--color-text-primary); }
+    .row-sync { margin-left:auto; display:inline-flex; align-items:center; gap:6px; background:none; border:none; cursor:pointer;
+      font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--color-accent); padding:2px; }
+    .row-sync svg { display:block; }
+
+    .poster-row { display:flex; gap:12px; padding:0 18px; overflow-x:auto; scrollbar-width:none; }
+    .poster-row::-webkit-scrollbar { display:none; }
+    .poster { width:118px; flex:0 0 auto; }
+    .poster .art { width:118px; height:170px; border-radius:var(--radii-m); overflow:hidden; position:relative; background-size:cover; background-position:center; box-shadow:0 0 0 1px rgba(255,255,255,.05) inset; }
+    .poster .pmeta { margin-top:7px; font-size:13px; font-weight:600; line-height:16px; color:var(--color-text-default); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .poster .psub { font-size:11px; color:var(--color-text-muted); margin-top:2px; }
+
+    /* dimmed placeholder posters (waiting to be filled by sync) */
+    .poster.ph .art { opacity:.4; box-shadow:0 0 0 1px rgba(255,255,255,.06) inset; }
+    .poster.ph .art::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent,rgba(0,0,0,.5)); }
+
+    /* the sync CTA poster tile */
+    .poster.cta .art { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:12px 10px; text-align:center; cursor:pointer;
+      border:1.5px dashed rgba(229,160,13,.5); background:linear-gradient(160deg,rgba(229,160,13,.16),rgba(21,169,252,.10)),#16171a;
+      transition:border-color .12s, transform .12s; }
+    .poster.cta .art:active { transform:scale(.97); border-color:var(--color-accent); }
+    .poster.cta .ic { width:36px; height:36px; border-radius:50%; background:rgba(229,160,13,.2); color:var(--color-accent); display:grid; place-items:center; }
+    .poster.cta .ct { font-size:12px; font-weight:700; color:var(--color-text-primary); line-height:15px; }
+    .poster.cta .cd { font-size:10px; font-weight:500; color:var(--color-text-muted); line-height:13px; }
+
+    .navbar { height:64px; display:flex; justify-content:space-around; align-items:center; padding-top:6px; border-top:1px solid var(--color-divider); position:relative; z-index:1; background:rgba(0,0,0,.4); }
+    .navbar .nav { display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-muted); font-size:10px; font-weight:600; background:none; border:none; }
+    .navbar .nav.active { color:var(--color-text-primary); }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="ultrablur-bg"></div>
+    <div class="status-bar"><span>9:41 AM</span><span>···</span></div>
+
+    <div class="home-top">
+      <span class="plex-logo">plex</span>
+      <span class="spacer"></span>
+      <button class="icon-btn" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <div class="avatar"></div>
+    </div>
+    <div class="tabs-row">
+      <span class="tab active">Discover</span>
+      <span class="tab">Movies</span>
+      <span class="tab">TV</span>
+      <span class="tab">Watchlist</span>
+    </div>
+
+    <div class="content">
+      <!-- Dismissible sync banner -->
+      <div class="sync-banner" id="syncBanner">
+        <div class="sb-top">
+          <div class="sb-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="sb-tx"><b>Make Plex feel like yours</b>Sync your watch history and watchlist from your services to personalize your home.</div>
+          <button class="sb-x" onclick="dismissBanner()" aria-label="Dismiss"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <button class="sb-cta" onclick="goManage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Sync your services</button>
+      </div>
+
+      <!-- Continue Watching — sync prompt (no hero) -->
+      <div class="row">
+        <div class="row-head">
+          <h2>Continue Watching</h2>        </div>
+        <div class="poster-row" id="continueRow"></div>
+      </div>
+
+      <!-- Recommended — sync prompt (no hero) -->
+      <div class="row">
+        <div class="row-head">
+          <h2>Recommended for you</h2>        </div>
+        <div class="poster-row" id="recommendedRow"></div>
+      </div>
+
+      <!-- Your Watchlist — sync prompt (no hero) -->
+      <div class="row">
+        <div class="row-head">
+          <h2>Your Watchlist</h2>        </div>
+        <div class="poster-row" id="watchlistRow"></div>
+      </div>
+
+      <!-- Trending row for context -->
+      <div class="row">
+        <div class="row-head"><h2>Trending on Plex</h2></div>
+        <div class="poster-row" id="trendingRow"></div>
+      </div>
+    </div>
+
+    <div class="navbar">
+      <button class="nav active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Home</button>
+      <button class="nav"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Search</button>
+      <button class="nav"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-3.5L6 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Watchlist</button>
+      <button class="nav"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.8"/></svg>Library</button>
+    </div>
+  </div>
+
+  <script>
+    function goManage(){ window.location.href = './manage-services.html'; }
+    function goDetail(){ window.location.href = './detail.html'; }
+    function dismissBanner(){ document.getElementById('syncBanner').style.display = 'none'; }
+    const SYNC_BIG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const GRADS = {
+      g1:'linear-gradient(160deg,#2b3a67,#0e1430)', g2:'linear-gradient(160deg,#7a2230,#2a0c12)',
+      g3:'linear-gradient(160deg,#3a5a2b,#16240f)', g4:'linear-gradient(160deg,#4a3a13,#1c1606)',
+      g5:'linear-gradient(160deg,#13384a,#06141c)', g6:'linear-gradient(160deg,#3a2b4a,#160e1c)',
+    };
+    function ctaTile(desc){
+      return `<div class="poster cta"><div class="art" onclick="goManage()"><div class="ic">${SYNC_BIG}</div><div class="ct">Sync your services</div><div class="cd">${desc}</div></div></div>`;
+    }
+    function ghost(grad){ return `<div class="poster ph"><div class="art" style="background-image:${grad}"></div></div>`; }
+    function poster(grad,title,sub){ return `<div class="poster" onclick="goDetail()"><div class="art" style="background-image:${grad}"></div><div class="pmeta">${title}</div><div class="psub">${sub}</div></div>`; }
+
+    // Continue Watching: sync CTA tile + dimmed placeholders
+    document.getElementById('continueRow').innerHTML =
+      ctaTile('Pick up where you left off') + ghost(GRADS.g5) + ghost(GRADS.g1) + ghost(GRADS.g3) + ghost(GRADS.g2);
+
+    // Recommended: sync CTA tile + dimmed placeholders
+    document.getElementById('recommendedRow').innerHTML =
+      ctaTile('Get picks based on what you watch') + ghost(GRADS.g6) + ghost(GRADS.g2) + ghost(GRADS.g4) + ghost(GRADS.g1);
+
+    // Blank watchlist: sync CTA tile + dimmed placeholders
+    document.getElementById('watchlistRow').innerHTML =
+      ctaTile('Fill your Watchlist automatically') + ghost(GRADS.g3) + ghost(GRADS.g4) + ghost(GRADS.g5) + ghost(GRADS.g1);
+
+    // Trending (context)
+    document.getElementById('trendingRow').innerHTML =
+      poster(GRADS.g1,'The Studio','Series') + poster(GRADS.g6,'Dune: Part Two','Movie') +
+      poster(GRADS.g5,'Shōgun','Series') + poster(GRADS.g2,'Fallout','Series');
+  </script>
+</body>
+</html>

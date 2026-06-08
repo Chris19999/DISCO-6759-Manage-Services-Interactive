@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=393, initial-scale=1.0" />
+  <title>Detail — Mobile Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face { font-family:'PlexCircular'; src:url('plexcircular-bold.woff2') format('woff2'); font-weight:700; font-style:normal; }
+    :root {
+      --color-surface:#000; --color-card:rgba(255,255,255,.06); --color-control:rgba(255,255,255,.12);
+      --color-text-primary:#fff; --color-text-default:rgba(255,255,255,.8); --color-text-muted:rgba(255,255,255,.55);
+      --color-accent:#e5a00d; --color-divider:rgba(255,255,255,.1); --color-bg-outer:#1a1a1a;
+      --font-heading:'PlexCircular','Inter',sans-serif; --font-body:'Inter',sans-serif;
+      --radii-s:4px; --radii-m:8px; --radii-l:16px; --radii-max:9999px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--font-body); background:var(--color-bg-outer); display:flex; justify-content:center; padding:20px; }
+    .phone-frame { width:393px; height:854px; background:var(--color-surface); border-radius:40px; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+    .scroll { flex:1; overflow-y:auto; scrollbar-width:none; position:relative; }
+    .scroll::-webkit-scrollbar { display:none; }
+
+    /* Top nav over backdrop */
+    .topnav { position:absolute; top:0; left:0; right:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:44px 16px 0; }
+    .nav-btn { width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,.45); backdrop-filter:blur(6px); border:none; color:#fff; display:grid; place-items:center; cursor:pointer; }
+
+    /* Backdrop / artwork */
+    .backdrop { position:relative; height:420px; background:radial-gradient(120% 80% at 70% 20%, #5a1d27, transparent 60%), linear-gradient(160deg,#3a1218 0%,#160a0c 60%,#000 100%); }
+    .backdrop::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,.5) 72%, #000 100%); }
+
+    /* Title block over the fade */
+    .titleblock { position:absolute; left:0; right:0; bottom:0; z-index:2; padding:0 20px 4px; text-align:center; }
+    .show-title { font-family:var(--font-heading); font-weight:700; font-size:32px; line-height:36px; color:#fff; letter-spacing:-.01em; }
+    .meta { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:10px; font-size:13px; font-weight:600; color:var(--color-text-muted); }
+    .meta .pip { width:3px; height:3px; border-radius:50%; background:currentColor; }
+    .meta .rated { border:1px solid var(--color-divider); border-radius:var(--radii-s); padding:0 5px; font-size:11px; }
+
+    .body { position:relative; z-index:2; padding:14px 20px 28px; }
+
+    /* Synced hint */
+    .synced-hint { display:flex; align-items:center; justify-content:center; gap:7px; margin:2px 0 16px; font-size:13px; font-weight:600; color:var(--color-text-default); }
+    .synced-hint .logo { width:18px; height:18px; border-radius:5px; overflow:hidden; }
+    .synced-hint .logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .synced-hint .ic { color:#4db288; display:flex; }
+
+    /* Resume button */
+    .resume { width:100%; border:none; border-radius:var(--radii-m); background:#fff; color:#1c1c1c; cursor:pointer;
+      display:flex; align-items:center; gap:12px; padding:12px 18px; text-align:left; overflow:hidden; position:relative; }
+    .resume:active { background:#e9e9e9; }
+    .resume .play { flex:0 0 auto; display:flex; }
+    .resume .rtx { flex:1; min-width:0; }
+    .resume .rmain { display:block; font-size:16px; font-weight:700; line-height:20px; }
+    .resume .rsub { display:block; font-size:12px; font-weight:500; line-height:16px; color:rgba(0,0,0,.6); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .resume .rtime { flex:0 0 auto; font-size:12px; font-weight:600; color:rgba(0,0,0,.6); }
+    .resume .progress { position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(0,0,0,.18); }
+    .resume .progress .fill { height:100%; width:62%; background:var(--color-accent); }
+
+    /* Secondary action row */
+    .actions { display:flex; justify-content:space-around; margin-top:18px; }
+    .action { display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:none; color:var(--color-text-default); font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer; }
+    .action .ab { width:44px; height:44px; border-radius:50%; background:var(--color-control); display:grid; place-items:center; color:#fff; }
+
+    .summary { margin-top:22px; font-size:14px; line-height:21px; color:var(--color-text-default); }
+    .sec-title { margin-top:24px; font-family:var(--font-heading); font-weight:700; font-size:17px; color:#fff; }
+
+    /* episode strip */
+    .ep-row { display:flex; gap:12px; margin-top:14px; overflow-x:auto; scrollbar-width:none; }
+    .ep-row::-webkit-scrollbar { display:none; }
+    .ep { width:150px; flex:0 0 auto; }
+    .ep .thumb { width:150px; height:84px; border-radius:var(--radii-m); position:relative; overflow:hidden; background-size:cover; box-shadow:0 0 0 1px rgba(255,255,255,.05) inset; }
+    .ep .thumb .pbar { position:absolute; left:0; bottom:0; height:3px; background:var(--color-accent); }
+    .ep .et { font-size:12px; font-weight:600; color:var(--color-text-default); margin-top:6px; }
+    .ep .es { font-size:11px; color:var(--color-text-muted); margin-top:1px; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="scroll">
+      <div class="topnav">
+        <button class="nav-btn" aria-label="Back" onclick="window.location.href='./home.html'"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="nav-btn" aria-label="More"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg></button>
+      </div>
+
+      <div class="backdrop">
+        <div class="titleblock">
+          <div class="show-title">Stranger Things</div>
+          <div class="meta"><span>2022</span><span class="pip"></span><span class="rated">TV-14</span><span class="pip"></span><span>4 Seasons</span><span class="pip"></span><span>Sci-Fi · Horror</span></div>
+        </div>
+      </div>
+
+      <div class="body">
+        <!-- synced hint -->
+        <div class="synced-hint">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span>Synced from</span>
+          <span class="logo"><img src="logos/netflix.svg" alt="Netflix"></span>
+          <span>Netflix</span>
+        </div>
+
+        <!-- primary: continue watching -->
+        <button class="resume">
+          <span class="play"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+          <span class="rtx">
+            <span class="rmain">Continue Watching</span>
+            <span class="rsub">S4:E7 · “The Massacre at Hawkins Lab”</span>
+          </span>
+          <span class="rtime">34m left</span>
+          <span class="progress"><span class="fill"></span></span>
+        </button>
+
+        <!-- secondary actions -->
+        <div class="actions">
+          <button class="action"><span class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-3.5L6 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Watchlist</button>
+          <button class="action"><span class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg></span>Trailer</button>
+          <button class="action"><span class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Watched</button>
+          <button class="action"><span class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="2.4" stroke="currentColor" stroke-width="1.8"/><path d="m8 11 8-5M8 13l8 5" stroke="currentColor" stroke-width="1.8"/></svg></span>Share</button>
+        </div>
+
+        <div class="summary">When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.</div>
+
+        <div class="sec-title">Continue · Season 4</div>
+        <div class="ep-row" id="epRow"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const G = { e7:'linear-gradient(160deg,#3a1e2a,#140a10)', e8:'linear-gradient(160deg,#22324a,#0b121c)', e9:'linear-gradient(160deg,#3a2b13,#160f06)' };
+    function ep(grad,title,sub,prog){ return `<div class="ep"><div class="thumb" style="background-image:${grad}">${prog?`<div class="pbar" style="width:${prog}%"></div>`:''}</div><div class="et">${title}</div><div class="es">${sub}</div></div>`; }
+    document.getElementById('epRow').innerHTML =
+      ep(G.e7,'E7 · The Massacre at Hawkins Lab','62% · 34m left',62) +
+      ep(G.e8,'E8 · Papa','1h 18m',0) +
+      ep(G.e9,'E9 · The Piggyback','2h 19m',0);
+  </script>
+</body>
+</html>

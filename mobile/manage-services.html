@@ -270,6 +270,7 @@
       align-items: center;
       justify-content: center;
     }
+    .service-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .service-icon .placeholder {
       font-size: 10px;
       color: var(--color-text-muted);
@@ -295,6 +296,9 @@
       color: var(--color-accent);
       line-height: 16px;
     }
+    .service-subtitle .sub-sep { display:inline-block; width:4px; height:4px; border-radius:50%; background:currentColor; vertical-align:middle; margin:0 8px; }
+    .service-subtitle .sub-link { cursor:pointer; }
+    .service-subtitle .sub-link:active { opacity:0.6; }
 
     /* Vertical divider between left area and switch */
     .service-divider {
@@ -589,9 +593,82 @@
     .blank-state-body { font-size: 14px; color: var(--color-text-muted); line-height: 1.4; }
 
     svg { display: block; }
+
+    /* ───────── Service Sync feature ───────── */
+    .feature-toggle{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;align-items:center;gap:9px;
+      background:rgba(20,20,22,.92);border:1px solid var(--color-control);border-radius:var(--radii-max);padding:6px 8px 6px 13px;
+      font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--color-text-default);backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.45);cursor:pointer;user-select:none;}
+    .feature-toggle .switch{width:40px;height:22px;}
+    .feature-toggle .switch .thumb{width:18px;height:18px;}
+    .feature-toggle .switch.active .thumb{transform:translateX(18px);}
+
+    .sync-explainer{display:flex;gap:12px;align-items:flex-start;margin:0 0 16px;padding:14px;border-radius:var(--radii-l);
+      background:linear-gradient(150deg,rgba(229,160,13,.12),rgba(21,169,252,.06)),var(--color-card);border:1px solid var(--color-divider);}
+    .sync-explainer .se-ic{flex:0 0 auto;width:34px;height:34px;border-radius:var(--radii-m);display:grid;place-items:center;background:rgba(229,160,13,.18);color:var(--color-accent);}
+    .sync-explainer .se-tx{flex:1;font-size:13px;line-height:18px;color:var(--color-text-muted);font-family:var(--font-body);}
+    .sync-explainer .se-tx b{display:block;font-size:14px;font-weight:600;color:var(--color-text-primary);margin-bottom:2px;}
+    .sync-explainer .se-x{flex:0 0 auto;width:24px;height:24px;margin:-2px -2px 0 0;border:none;background:none;color:var(--color-text-muted);display:grid;place-items:center;border-radius:var(--radii-max);cursor:pointer;}
+
+    .connect-pill{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 16px;border-radius:var(--radii-max);
+      background:#fff;border:none;color:#1c1c1c;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-right:16px;}
+    .connect-pill:active{background:#e6e6e6;}
+    .synced-pill{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 6px;border:none;background:none;color:#4db288;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-right:6px;}
+    .synced-pill svg{display:block;}
+
+    .sync-controls{background:var(--color-card);border:1px solid var(--color-divider);border-radius:var(--radii-l);padding:4px 16px;margin-bottom:18px;}
+    .sync-controls .ctl{display:flex;align-items:center;gap:12px;padding:14px 0;}
+    .sync-controls .ctl + .ctl{border-top:1px solid var(--color-divider);}
+    .sync-controls .ctl .ctl-ico{flex:0 0 auto;display:flex;align-items:center;color:var(--color-text-muted);}
+    .sync-controls .ctl .ttl{flex:1;}
+    .sync-controls .ctl .ttl .t{font-size:15px;font-weight:600;color:#fff;font-family:var(--font-body);}
+    .sync-controls .ctl .ttl .d{font-size:12px;color:var(--color-text-muted);margin-top:2px;font-family:var(--font-body);}
+    .sync-cta{width:100%;height:44px;border:none;border-radius:var(--radii-max);background:var(--color-accent);color:#1c1c1c;font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer;}
+    .sync-cta.disabled{opacity:.4;pointer-events:none;}
+    .sync-ghost{width:100%;height:44px;border:none;border-radius:var(--radii-max);background:transparent;color:var(--color-text-default);font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;}
+    .sync-disconnect{display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#fb6a4a;}
+    .sync-disconnect:active{background:rgba(251,106,74,.12);}
+    .sync-disconnect svg{display:block;}
+    .sync-privacy{display:flex;gap:8px;color:var(--color-text-muted);font-size:12px;line-height:17px;margin-top:14px;font-family:var(--font-body);}
+    .sync-privacy svg{flex:0 0 auto;margin-top:1px;}
+    .sync-hint{display:none;margin-top:8px;font-size:12px;line-height:16px;font-weight:600;color:#fb6a4a;font-family:var(--font-body);text-align:center;}
+    .sync-hint.show{display:block;}
+    .sync-connecting{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 8px 24px;}
+    .sync-spinner{width:52px;height:52px;border-radius:50%;border:4px solid rgba(255,255,255,.12);border-top-color:var(--color-accent);animation:syncspin .9s linear infinite;margin-bottom:20px;}
+    @keyframes syncspin{to{transform:rotate(360deg);}}
+    .sync-connecting .ct{font-family:var(--font-heading);font-weight:700;font-size:19px;color:#fff;margin-bottom:6px;}
+    .sync-connecting .cd{font-size:14px;color:var(--color-text-muted);line-height:20px;max-width:260px;font-family:var(--font-body);}
+    .tab-btn .sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4db288;margin-right:7px;vertical-align:middle;}
+    .more-opts-synced{display:inline-flex;align-items:center;gap:5px;color:#4db288;font-size:13px;font-weight:600;margin-top:3px;font-family:var(--font-body);}
+    .more-opts-synced svg{display:block;}
+
+    /* Fake service login (OAuth-style hand-off) */
+    .svc-login{position:absolute;inset:0;z-index:2000;background:#000;display:none;flex-direction:column;border-radius:inherit;overflow:hidden;}
+    .svc-login.show{display:flex;animation:slLift .22s ease both;}
+    @keyframes slLift{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+    .svc-login .sl-top{display:flex;align-items:center;justify-content:space-between;padding:50px 18px 0;}
+    .svc-login .sl-x{width:34px;height:34px;border:none;background:none;color:#fff;display:grid;place-items:center;cursor:pointer;}
+    .svc-login .sl-brand{height:30px;display:flex;align-items:center;}
+    .svc-login .sl-brand img{height:30px;width:30px;border-radius:7px;object-fit:cover;display:block;}
+    .svc-login .sl-body{flex:1;padding:40px 30px 28px;display:flex;flex-direction:column;}
+    .svc-login h1{font-family:var(--font-heading);font-size:28px;font-weight:700;color:#fff;margin:0 0 26px;}
+    .svc-login .sl-field{margin-bottom:14px;}
+    .svc-login input{width:100%;height:54px;border-radius:6px;border:none;background:#2b2b2b;color:#fff;font-size:15px;font-family:var(--font-body);padding:0 16px;outline:none;}
+    .svc-login input:focus{background:#373737;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset;}
+    .svc-login .sl-btn{height:52px;border-radius:6px;border:none;background:var(--svc-color,#e50914);color:#fff;font-size:16px;font-weight:700;font-family:var(--font-body);margin-top:10px;cursor:pointer;}
+    .svc-login .sl-btn:active{filter:brightness(.9);}
+    .svc-login .sl-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;color:#b3b3b3;font-size:13px;font-family:var(--font-body);}
+    .svc-login .sl-remember{display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .svc-login .sl-check{width:16px;height:16px;border-radius:3px;background:#b3b3b3;}
+    .svc-login .sl-handoff{margin-top:auto;display:flex;gap:8px;align-items:flex-start;color:#8c8c8c;font-size:12px;line-height:16px;font-family:var(--font-body);}
+    .svc-login .sl-handoff svg{flex:0 0 auto;margin-top:1px;}
   </style>
 </head>
 <body>
+  <!-- Feature flag toggle (demo control) -->
+  <div class="feature-toggle" onclick="toggleSyncFeature()">
+    Service Sync
+    <div class="switch active" id="featureSwitch"><div class="thumb"></div></div>
+  </div>
   <div class="phone-frame">
     <!-- UltraBlur background -->
     <div class="ultrablur-bg"></div>
@@ -599,7 +676,7 @@
     <div class="status-bar"><span>9:41 AM</span><span>...</span></div>
 
     <div class="header">
-      <button class="header-btn" onclick="alert('Close')">
+      <button class="header-btn" onclick="window.location.href='./home.html'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <div class="header-title">Manage Services</div>
@@ -637,6 +714,12 @@
 
       <!-- Normal content -->
       <div id="normalContent">
+        <!-- Service Sync explainer (feature on) -->
+        <div class="sync-explainer" id="syncExplainer">
+          <div class="se-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="se-tx"><b>Connect to sync &amp; personalize</b>Bring your watch history and watchlist into Plex to personalize your home.</div>
+          <button class="se-x" onclick="dismissSyncExplainer()" aria-label="Dismiss"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
         <div id="myServicesSection">
           <!-- Populated state (with badge + hide/show) -->
           <div id="myServicesPopulated">
@@ -694,6 +777,10 @@
       <div class="sheet-handle"></div>
       <div id="moreSheetContent"></div>
     </div>
+
+    <!-- Fake service login (OAuth-style hand-off) -->
+    <div class="svc-login" id="svcLogin"></div>
+
   </div>
 
   <script>
@@ -733,6 +820,9 @@
       { id: 'max', name: 'Max', color: '#002BE7', label: 'MAX', enabled: false },
       { id: 'disney', name: 'Disney+', color: '#113CCF', label: 'D+', enabled: false },
     ];
+    // Service Sync feature: all services are sync-capable in this prototype
+    const SERVICE_LOGOS = { 'netflix':'netflix.svg', 'apple-tv':'apple-tv.svg', 'prime-video':'prime-video.svg', 'hulu':'hulu.svg', 'paramount':'paramount-plus.svg', 'peacock':'peacock.svg', 'max':'max-stream.svg', 'disney':'disney-plus.svg' };
+    services.forEach(s => { s.sync = true; s.connected = false; s.history = true; s.watchlist = true; s.logo = SERVICE_LOGOS[s.id]; });
 
     // ── State ──
     const state = {
@@ -745,6 +835,11 @@
       justActivatedSearch: false,
       svgIdCounter: 0,
       searchAutoEnabled: new Set(), // services auto-enabled by sub-channel selection in search
+      // Service Sync feature
+      syncFeature: true,    // feature flag (toggle in top control)
+      syncDismissed: false, // explainer dismissed
+      syncStep: null,       // transient: 'connecting' while a connect is in progress (in the Sync tab)
+      loginServiceId: null, // service id whose fake login screen is showing
     };
 
     // Pending removals: map of serviceId → timeout handle
@@ -792,10 +887,19 @@
       </svg></div>`;
     }
 
-    function createServiceItem(service, { dimmed = false, hideSubtitle = false } = {}) {
+    const SYNC_ICON_SM = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function createServiceItem(service, { dimmed = false, hideSubtitle = false, inMyServices = false } = {}) {
       const hasOptions = (service.optionsCount || 0) > 0;
-      const showSubtitle = service.enabled && hasOptions && !hideSubtitle;
-      const leftOpensMore = !dimmed && service.enabled && hasOptions;
+      const isSynced = state.syncFeature && service.sync && service.connected;
+      // subtitle: "12 options · Synced" (synced shown inline instead of by the toggle)
+      const subParts = [];
+      if (hasOptions) subParts.push(`<span class="sub-link" onclick="event.stopPropagation();openMoreOptions('${service.id}','channels')">${service.optionsCount} options</span>`);
+      if (isSynced) subParts.push(`<span class="sub-link" onclick="event.stopPropagation();openMoreOptions('${service.id}','sync')">Synced</span>`);
+      const subtitleHTML = subParts.join('<span class="sub-sep"></span>');
+      const showSubtitle = service.enabled && subParts.length > 0 && !hideSubtitle;
+      // connected services are tappable (open More Options → Sync tab), even without sub-options
+      const leftOpensMore = !dimmed && service.enabled && (hasOptions || isSynced);
       const leftToggles = !dimmed && !leftOpensMore;
       const leftPressable = leftOpensMore || leftToggles;
       const leftAction = leftOpensMore
@@ -803,21 +907,26 @@
         : leftToggles
         ? `onclick="toggleService('${service.id}')"`
         : '';
-      // Show divider only when service is enabled AND has sub-options (and not dimmed)
-      const showDivider = !dimmed && service.enabled && hasOptions;
+      const showDivider = false;   // no vertical divider between the left area and the right controls
       const dimmedClass = dimmed ? ' search-parent-service' : '';
+      // Right side: Connect button only while not yet connected (synced status now lives in the subtitle)
+      let syncAffordance = '';
+      if (state.syncFeature && service.sync && service.enabled && !dimmed && !service.connected) {
+        syncAffordance = `<button class="connect-pill" onclick="event.stopPropagation();openConnectSheet('${service.id}')">Connect</button>`;
+      }
       return `
         <div class="service-item${dimmedClass}" data-service-id="${service.id}">
           <div class="service-left ${leftPressable ? 'pressable' : ''}" ${leftAction}>
-            <div class="service-icon" style="background: ${service.color}">
-              <span class="placeholder">${service.label}</span>
+            <div class="service-icon"${service.logo ? '' : ` style="background: ${service.color}"`}>
+              ${service.logo ? `<img src="logos/${service.logo}" alt="">` : `<span class="placeholder">${service.label}</span>`}
             </div>
             <div class="service-info">
               <div class="service-name${service.enabled ? ' selected' : ''}">${service.name}</div>
-              ${showSubtitle && !dimmed ? `<div class="service-subtitle">${(service.channels ? service.channels.filter(c => c.selected).length : 0)} add-ons enabled</div>` : ''}
+              ${showSubtitle && !dimmed ? `<div class="service-subtitle">${subtitleHTML}</div>` : ''}
             </div>
           </div>
           ${showDivider ? '<div class="service-divider"></div>' : '<div class="service-spacer"></div>'}
+          ${syncAffordance}
           <div class="switch ${service.enabled ? 'active' : ''}" ${!dimmed ? `onclick="toggleService('${service.id}')"` : ''}>
             <div class="thumb"></div>
           </div>
@@ -850,7 +959,7 @@
       } else {
         myPopulated.style.display = '';
         myBlank.classList.add('hidden');
-        document.getElementById('myServicesList').innerHTML = myServices.map(s => createServiceItem(s)).join('');
+        document.getElementById('myServicesList').innerHTML = myServices.map(s => createServiceItem(s, { inMyServices: true })).join('');
         // Re-apply flashing class to any services mid-fade (pendingRemovals)
         pendingRemovals.forEach((timeout, sid) => {
           const el = document.getElementById('myServicesList').querySelector(`[data-service-id="${sid}"]`);
@@ -889,6 +998,7 @@
 
       const wasEnabled = s.enabled;
       s.enabled = !s.enabled;
+      if (wasEnabled) s.connected = false; // removing a service stops syncing
 
       if (wasEnabled) {
         // Turning OFF — delayed removal from My Services
@@ -1139,15 +1249,20 @@
 
     // ── More Options Sheet ──
 
-    function openMoreOptions(id) {
+    function openMoreOptions(id, tabKey) {
       state.moreOptionsId = id;
-      state.moreActiveTab = 0;
+      const s = services.find(sv => sv.id === id);
+      const hasChannels = s && s.channels && s.channels.length > 0;
+      const hasPlans = s && s.plans && s.plans.length > 0;
+      state.moreActiveTab = tabKey || (hasChannels ? 'channels' : hasPlans ? 'plans' : 'sync');
+      state.syncStep = null;
       renderMoreSheet();
       document.getElementById('moreBackdrop').classList.add('visible');
       document.getElementById('moreSheet').classList.add('visible');
     }
     function closeMoreOptions() {
       state.moreOptionsId = null;
+      state.syncStep = null;
       document.getElementById('moreBackdrop').classList.remove('visible');
       document.getElementById('moreSheet').classList.remove('visible');
     }
@@ -1184,25 +1299,59 @@
       if (!s) return;
       const hasChannels = s.channels && s.channels.length > 0;
       const hasPlans = s.plans && s.plans.length > 0;
-      const hasBoth = hasChannels && hasPlans;
+      const hasSync = state.syncFeature && s.sync;   // Sync tab handles connect + manage
+
+      // Build dynamic tab set (Sync tab folds in for sync-capable services)
+      const tabs = [];
+      if (hasSync) tabs.push({ key: 'sync', label: 'Sync' });
+      if (hasChannels) tabs.push({ key: 'channels', label: 'Channels & Add Ons' });
+      if (hasPlans) tabs.push({ key: 'plans', label: 'Plans' });
+      if (!tabs.find(t => t.key === state.moreActiveTab)) state.moreActiveTab = tabs.length ? tabs[0].key : null;
+      const active = state.moreActiveTab;
 
       let html = `
         <div class="more-opts-header">
-          <div class="service-icon" style="background: ${s.color}"><span class="placeholder">${s.label}</span></div>
-          <div class="service-name" style="flex:1;font-size:18px;font-weight:700;color:white;font-family:var(--font-heading)">${s.name}</div>
+          <div class="service-icon"${s.logo ? '' : ` style="background: ${s.color}"`}>${s.logo ? `<img src="logos/${s.logo}" alt="">` : `<span class="placeholder">${s.label}</span>`}</div>
+          <div class="more-opts-title" style="flex:1;min-width:0">
+            <div class="service-name" style="font-size:18px;font-weight:700;color:white;font-family:var(--font-heading)">${s.name}</div>
+            ${(state.syncFeature && s.connected) ? `<div class="more-opts-synced">${SYNC_ICON_SM} Last synced just now</div>` : ''}
+          </div>
+          <div class="switch ${s.enabled ? 'active' : ''}" onclick="toggleService('${s.id}')"><div class="thumb"></div></div>
         </div>
         <div class="more-opts-divider"></div>`;
 
-      if (hasBoth) {
-        html += `<div class="tabs">
-          <button class="tab-btn ${state.moreActiveTab === 0 ? 'active' : ''}" onclick="switchMoreTab(0)">Channels & Add Ons</button>
-          <button class="tab-btn ${state.moreActiveTab === 1 ? 'active' : ''}" onclick="switchMoreTab(1)">Plans</button>
-        </div>`;
+      if (tabs.length > 1) {
+        html += `<div class="tabs">${tabs.map(t => `<button class="tab-btn ${active === t.key ? 'active' : ''}" onclick="switchMoreTab('${t.key}')">${(t.key === 'sync' && s.connected) ? '<span class="sync-dot"></span>' : ''}${t.label}</button>`).join('')}</div>`;
       }
 
-      html += `<div class="tab-content ${s.enabled ? '' : 'dimmed'}">`;
+      html += `<div class="tab-content ${(s.enabled || active === 'sync') ? '' : 'dimmed'}">`;
 
-      if ((state.moreActiveTab === 0 && hasChannels) || (!hasPlans && hasChannels)) {
+      if (active === 'sync') {
+        const bothOff = !s.history && !s.watchlist;
+        const step = state.syncStep === 'connecting' ? 'connecting' : (s.connected ? 'connected' : 'intro');
+        const toggles = `<div class="sync-controls" style="margin-bottom:14px">
+            <div class="ctl" style="cursor:pointer" onclick="moreSyncToggle('${s.id}','history')"><span class="ctl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="ttl"><div class="t">Watch history</div><div class="d">Personalize recommendations</div></div>
+              ${checkboxSVG(s.history)}</div>
+            <div class="ctl" style="cursor:pointer" onclick="moreSyncToggle('${s.id}','watchlist')"><span class="ctl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-3.5L6 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><div class="ttl"><div class="t">Watchlist</div><div class="d">Import saved titles</div></div>
+              ${checkboxSVG(s.watchlist)}</div>
+          </div>`;
+        const hintMsg = step === 'connected' ? `Nothing will sync. Turn on an option above, or disconnect ${s.name}.` : 'Turn on Watch history or Watchlist to sync something.';
+        const hint = `<div class="sync-hint show">${hintMsg}</div>`;
+        if (step === 'connecting') {
+          html += `<div class="sync-connecting"><div class="sync-spinner"></div><div class="ct">Connecting to ${s.name}…</div><div class="cd">Securely signing in and importing your watch history and watchlist.</div></div>`;
+        } else if (step === 'connected') {
+          html += `<div class="tab-desc">We imported 247 titles from your history and 18 from your watchlist. Choose what ${s.name} syncs, or disconnect to stop personalizing your home.</div>
+            ${toggles}
+            ${bothOff ? hint : ''}
+            <button class="sync-ghost sync-disconnect" onclick="syncDisconnect('${s.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 17H7A5 5 0 0 1 7 7h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h2a5 5 0 0 1 4.58 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 12h4M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Disconnect ${s.name}</button>`;
+        } else {
+          html += `<div class="tab-desc">Sync your watch history and watchlist so Plex can personalize your home with recommendations based on what you watch, and keep everything you've saved in one place.</div>
+            ${toggles}
+            <button class="sync-cta ${bothOff ? 'disabled' : ''}" onclick="syncTabConnect()">Connect ${s.name}</button>
+            ${bothOff ? hint : ''}
+            <div class="sync-privacy" style="margin-top:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Plex only reads your history and watchlist — never your password.</span></div>`;
+        }
+      } else if (active === 'channels') {
         html += `<div class="tab-desc">Select any channels or add-ons you have through ${s.name} to prioritize content with availabilities your channels & add-ons.</div>`;
         s.channels.forEach(ch => {
           html += `<div class="option-row" onclick="toggleChannel('${s.id}','${ch.id}')">
@@ -1211,9 +1360,7 @@
             ${checkboxSVG(ch.selected)}
           </div>`;
         });
-      }
-
-      if ((state.moreActiveTab === 1 && hasPlans) || (!hasChannels && hasPlans)) {
+      } else if (active === 'plans') {
         html += `<div class="tab-desc">Different plans may have different movies and shows available in their catalogs.</div>`;
         s.plans.forEach(p => {
           html += `<div class="option-row plan-row" onclick="selectPlan('${s.id}','${p.id}')">
@@ -1225,6 +1372,13 @@
 
       html += '</div>';
       document.getElementById('moreSheetContent').innerHTML = html;
+    }
+    function moreSyncToggle(id, which) {
+      const s = services.find(sv => sv.id === id);
+      if (!s) return;
+      s[which] = !s[which];
+      renderMoreSheet();
+      render();
     }
 
     // Dynamic gradient fade mask based on scroll position
@@ -1266,7 +1420,89 @@
       dismissSearch();
     });
 
+    // ───────── Service Sync feature ─────────
+    const byServiceId = id => services.find(s => s.id === id);
+
+    function toggleSyncFeature(){
+      state.syncFeature = !state.syncFeature;
+      document.getElementById('featureSwitch').classList.toggle('active', state.syncFeature);
+      state.syncStep = null;
+      updateSyncExplainer();
+      render();
+      if(state.moreOptionsId) renderMoreSheet();
+    }
+    function updateSyncExplainer(){
+      const ex = document.getElementById('syncExplainer');
+      ex.style.display = (state.syncFeature && !state.syncDismissed) ? 'flex' : 'none';
+    }
+    function dismissSyncExplainer(){ state.syncDismissed = true; updateSyncExplainer(); }
+
+    // Connect & manage both live in the More Options "Sync" tab (no separate sheet)
+    function openConnectSheet(id){ openMoreOptions(id, 'sync'); }
+    function openSyncManage(id){ openMoreOptions(id, 'sync'); }
+    function syncTabConnect(){
+      const s = byServiceId(state.moreOptionsId); if(!s) return;
+      if(!s.history && !s.watchlist) return; // both-off guard
+      // Step 1: brief "redirecting" spinner, then hand off to the service's own login screen
+      state.syncStep = 'connecting'; renderMoreSheet();
+      setTimeout(() => {
+        if(state.syncStep !== 'connecting') return;
+        showServiceLogin(s.id);
+      }, 1300);
+    }
+    function syncDisconnect(id){ const s = byServiceId(id); if(s) s.connected = false; state.syncStep = null; closeMoreOptions(); render(); }
+
+    // ---- Fake service login (OAuth-style hand-off) ----
+    function showServiceLogin(id){
+      state.loginServiceId = id;
+      renderServiceLogin();
+      // Tuck the sheet away so the login fully takes over the screen
+      document.getElementById('moreSheet').classList.remove('visible');
+      document.getElementById('moreBackdrop').classList.remove('visible');
+      document.getElementById('svcLogin').classList.add('show');
+    }
+    function cancelServiceLogin(){
+      document.getElementById('svcLogin').classList.remove('show');
+      state.loginServiceId = null; state.syncStep = null;
+      renderMoreSheet();
+      document.getElementById('moreBackdrop').classList.add('visible');
+      document.getElementById('moreSheet').classList.add('visible');
+    }
+    function serviceLoginSubmit(){
+      const s = byServiceId(state.loginServiceId); if(!s) return;
+      document.getElementById('svcLogin').classList.remove('show');
+      state.loginServiceId = null;
+      // Step 3: back in Plex, import progress, then connected
+      state.syncStep = 'connecting'; renderMoreSheet();
+      document.getElementById('moreBackdrop').classList.add('visible');
+      document.getElementById('moreSheet').classList.add('visible');
+      setTimeout(() => {
+        if(state.syncStep !== 'connecting') return;
+        s.connected = true; state.syncStep = null; renderMoreSheet(); render();
+      }, 1400);
+    }
+    function renderServiceLogin(){
+      const s = byServiceId(state.loginServiceId); if(!s) return;
+      const el = document.getElementById('svcLogin');
+      el.style.setProperty('--svc-color', s.color || '#e50914');
+      el.innerHTML = `
+        <div class="sl-top">
+          <button class="sl-x" onclick="cancelServiceLogin()" aria-label="Cancel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <span class="sl-brand"><img src="logos/${s.logo}" alt="${s.name}"></span>
+          <span style="width:22px"></span>
+        </div>
+        <div class="sl-body">
+          <h1>Sign In</h1>
+          <div class="sl-field"><input type="text" value="chris@email.com" autocomplete="off" spellcheck="false"></div>
+          <div class="sl-field"><input type="password" value="password123" autocomplete="off"></div>
+          <button class="sl-btn" onclick="serviceLoginSubmit()">Sign In</button>
+          <div class="sl-row"><label class="sl-remember"><span class="sl-check"></span>Remember me</label><span>Need help?</span></div>
+          <div class="sl-handoff"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>You're signing in to ${s.name} to let Plex sync your history & watchlist. Plex never sees your password.</span></div>
+        </div>`;
+    }
+
     render();
+    updateSyncExplainer();
   </script>
 </body>
 </html>
